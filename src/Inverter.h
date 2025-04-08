@@ -17,7 +17,8 @@ class Inverter
 {
     public:
         virtual ~Inverter(){}
-        virtual void read() = 0;
+        virtual void loop(){}     // if inverter code needs constant activity to do its magic
+        virtual void read() = 0;  // periodically reads inverter data
         virtual bool isDataValid() = 0;
     
         virtual InverterData getData(bool fullSet = false) = 0;

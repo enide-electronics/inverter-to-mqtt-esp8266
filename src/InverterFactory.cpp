@@ -6,6 +6,7 @@
 #include "GrowattInverter.h"
 #include "TestInverter.h"
 #include "NoneInverter.h"
+#include "soyosource/SoyosourceGTNInverter.h"
 #include "GLog.h"
 
 static GrowattInverter *createGrowattInverter(int modbusAddress, bool enableRemoteCommands, bool isTL) {
@@ -18,6 +19,19 @@ static GrowattInverter *createGrowattInverter(int modbusAddress, bool enableRemo
 #else
     Serial.begin(9600);
     return new GrowattInverter(&Serial, false, modbusAddress, enableRemoteCommands, isTL);
+#endif
+}
+
+static SoyosourceGTNInverter *createSoyosourceGTNInverter() {
+    #ifdef LARGE_ESP_BOARD
+    #define PIN_RX D6
+    #define PIN_TX D5
+    SoftwareSerial *_softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
+    _softSerial->begin(9600);
+    return new SoyosourceGTNInverter(_softSerial, true);
+#else
+    Serial.begin(9600);
+    return new SoyosourceGTNInverter(&Serial, false);
 #endif
 }
 
@@ -36,6 +50,8 @@ Inverter *InverterFactory::createInverter(String type, InverterParams params) {
         return createGrowattInverter(params.modbusAddress, false, false);
     } else if (type == "test") {
         return new TestInverter();
+    } else if (type == "gtn") {
+        return createSoyosourceGTNInverter();
     } else {
         return new NoneInverter();
     }

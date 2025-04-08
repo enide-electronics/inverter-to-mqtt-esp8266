@@ -189,6 +189,7 @@ void loop() {
     }
     
     mqtt->loop();
+    inverter->loop();
 
     unsigned long now = millis();
 

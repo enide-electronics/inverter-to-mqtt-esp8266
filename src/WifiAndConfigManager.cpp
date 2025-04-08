@@ -40,6 +40,7 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
     <option value="sph">Growatt SPH</option>
     <option value="sphtl">Growatt SPH-TL</option>
     <option value="minxh">Growatt MIN-XH</option>
+    <option value="gtn">Soyosource GTN (display)</option>
     <option value="test">Test</option>
     <option value="none">None</option>
   </select>
