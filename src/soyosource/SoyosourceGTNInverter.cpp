@@ -55,38 +55,45 @@ void SoyosourceGTNInverter::loop() {
 }
 
 void SoyosourceGTNInverter::read() {
-    String dataToSend;
-    serializeJson(dataJson, dataToSend);
-    GLOG::println(String(F("GTN: ")) + dataToSend);
+    if (isValid) {
+        String dataToSend;
+        serializeJson(dataJson, dataToSend);
+        GLOG::println(dataToSend);
+    }
 }
 bool SoyosourceGTNInverter::isDataValid() {
     return isValid;
 }
     
 InverterData SoyosourceGTNInverter::getData(bool fullSet) {
-    uint16_t pw_req = dataJson["pw_req"];
-    uint16_t mode = dataJson["mode"];
-    uint16_t error = dataJson["error"] ;
-    float bt_v = dataJson["bt_v"];
-    float bt_a = dataJson["bt_a"];
-    uint16_t ac_v = dataJson["ac_v"];
-    float ac_hz = dataJson["ac_hz"] ;
-    float temp = dataJson["temp"];
-    float pw_out = bt_v * bt_a * 0.865; // as seen in the html.h file
-
     InverterData data;
 
-    data.set("pw_req", pw_req);
-    data.set("mode", mode);
-    data.set("error", error);
-    data.set("bt_v", bt_v);
-    data.set("bt_a", bt_a);
-    data.set("ac_v", ac_v);
-    data.set("ac_hz", ac_hz);
-    data.set("temp", temp);
-    data.set("pw_out", pw_out);
+    if (isValid) {
+        uint16_t pw_req = dataJson["pw_req"];
+        uint16_t mode = dataJson["mode"];
+        uint16_t error = dataJson["error"] ;
+        float bt_v = dataJson["bt_v"];
+        float bt_a = dataJson["bt_a"];
+        uint16_t ac_v = dataJson["ac_v"];
+        float ac_hz = dataJson["ac_hz"] ;
+        float temp = dataJson["temp"];
+        float pw_out = bt_v * bt_a * 0.865; // as seen in the html.h file
 
-    isValid = false;
+        
+
+        data.set("pw_req", pw_req);
+        data.set("mode", mode);
+        data.set("error", error);
+        data.set("bt_v", bt_v);
+        data.set("bt_a", bt_a);
+        data.set("ac_v", ac_v);
+        data.set("ac_hz", ac_hz);
+        data.set("temp", temp);
+        data.set("pw_out", pw_out);
+
+        isValid = false;
+    }
+    
     return data;
 }
 
