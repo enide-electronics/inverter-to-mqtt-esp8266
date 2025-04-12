@@ -8,6 +8,7 @@
 
 #include "MqttPublisher.h"
 #include "GLog.h"
+#include "uptime_formatter.h"
 
 #define LWT_TOPIC ((this->topic + "/online").c_str())
         
@@ -41,6 +42,7 @@ void MqttPublisher::publishData(InverterData &data) {
 void MqttPublisher::publishTele() {
     client->publish((topic + "/tele/IP").c_str(), WiFi.localIP().toString().c_str());
     client->publish((topic + "/tele/ClientID").c_str(), clientId.c_str());
+    client->publish((topic + "/tele/Uptime").c_str(), uptime_formatter::getUptime().c_str());
 }
 
 void MqttPublisher::publishOnline() {
