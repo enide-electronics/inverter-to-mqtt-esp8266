@@ -8,7 +8,7 @@
 #ifndef GROWATT_TASK_READ_HOLDING_H
 #define GROWATT_TASK_READ_HOLDING_H
 
-#include "Task.h"
+#include "../Task.h"
 #include <ModbusMaster.h>
 
 #define TOPIC_SETTINGS_READ_HOLDING_TASK "settings/read_holding"

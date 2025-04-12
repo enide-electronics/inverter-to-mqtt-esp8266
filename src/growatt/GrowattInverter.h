@@ -16,9 +16,9 @@
 #include <list>
 #include <functional>
 #include <ModbusMaster.h>
-#include "Task.h"
+#include "../Task.h"
 
-#include "Inverter.h"
+#include "../Inverter.h"
 
 class GrowattInverter : public Inverter
 {

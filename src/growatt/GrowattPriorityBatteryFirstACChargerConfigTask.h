@@ -12,7 +12,7 @@
 #ifndef GROWATT_PRIORITY_BAT_FIRST_AC_CHARGER_CONFIG_TASK_H
 #define GROWATT_PRIORITY_BAT_FIRST_AC_CHARGER_CONFIG_TASK_H
 
-#include "Task.h"
+#include "../Task.h"
 #include <ModbusMaster.h>
 
 #define TOPIC_SETTINGS_PRIORITY_BAT_FIRST_AC_CHARGER_TASK "settings/priority/bat/ac"

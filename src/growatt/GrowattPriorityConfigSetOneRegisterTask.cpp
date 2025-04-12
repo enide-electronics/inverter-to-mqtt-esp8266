@@ -10,7 +10,7 @@
 */
 
 #include "GrowattPriorityConfigSetOneRegisterTask.h"
-#include "GLog.h"
+#include "../GLog.h"
      
 GrowattPriorityConfigSetOneRegisterTask::GrowattPriorityConfigSetOneRegisterTask(ModbusMaster * node, const String &priorityName, const String &configName, const String &mqttPayload)
 {

@@ -5,9 +5,9 @@
   Written by JF enide.electronics (at) enide.net
   Licensed under GNU GPLv3
 */
-#include "Task.h"
+#include "../Task.h"
 #include "GrowattPriorityTaskCommon.h"
-#include "ModbusMaster.h"
+#include <ModbusMaster.h>
 
 class GrowattPriorityTask : public Task {
     /*

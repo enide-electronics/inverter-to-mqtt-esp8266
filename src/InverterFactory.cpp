@@ -3,7 +3,7 @@
 
 #include <SoftwareSerial.h>
 
-#include "GrowattInverter.h"
+#include "growatt/GrowattInverter.h"
 #include "TestInverter.h"
 #include "NoneInverter.h"
 #include "soyosource/SoyosourceGTNInverter.h"

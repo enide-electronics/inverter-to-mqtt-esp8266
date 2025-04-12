@@ -13,7 +13,7 @@
 #ifndef GROWATT_PRIORITY_CONFIG_SET_ONE_REG_TASK_H
 #define GROWATT_PRIORITY_CONFIG_SET_ONE_REG_TASK_H
 
-#include "Task.h"
+#include "../Task.h"
 #include <ModbusMaster.h>
 
 class GrowattPriorityConfigSetOneRegisterTask : public Task {

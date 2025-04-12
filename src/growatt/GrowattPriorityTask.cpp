@@ -7,8 +7,8 @@
 */
 #include <ArduinoJson.h>
 #include "GrowattPriorityTask.h"
-#include "Glog.h"
-#include "ModbusUtils.h"
+#include "../Glog.h"
+#include "../ModbusUtils.h"
 
 #define LOG_MSG "GrowattPriorityTask: set priority to "
 

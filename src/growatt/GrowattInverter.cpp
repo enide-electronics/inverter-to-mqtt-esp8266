@@ -8,10 +8,10 @@
   Licensed under GNU GPLv3
 */
 #include "GrowattInverter.h"
-#include "GLog.h"
+#include "../GLog.h"
 #include "GrowattTaskFactory.h"
-#include "Task.h"
-#include "ModbusUtils.h"
+#include "../Task.h"
+#include "../ModbusUtils.h"
 
 
 static uint8_t stateSequence[] = {0, 1, 3, 0, 1, 4, 0, 1, 3, 0, 1, 4, 2};

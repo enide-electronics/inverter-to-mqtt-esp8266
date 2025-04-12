@@ -7,7 +7,7 @@
 */
 #include "GrowattPriorityTimeConfigTask.h"
 #include "GrowattPriorityTaskCommon.h"
-#include<StringSplitter.h>
+#include <StringSplitter.h>
 
 GrowattPriorityTimeConfigTask::GrowattPriorityTimeConfigTask(ModbusMaster * node, const String &priorityName, const String &timeName, const String &mqttPayload)
 {
