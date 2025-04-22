@@ -71,7 +71,7 @@ void MqttPublisher::keepConnected() {
         lastReconnectAttemptMillis = millis();
 
         // Create a random client ID
-        clientId = "growatt-";
+        clientId = this->topic + "-";
         clientId += String(random(0xffff), HEX);
     
         // Attempt to connect

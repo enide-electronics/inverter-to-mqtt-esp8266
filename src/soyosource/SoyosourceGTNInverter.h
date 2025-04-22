@@ -39,6 +39,7 @@ class SoyosourceGTNInverter : public Inverter {
         int byteIdx = 0;
         bool isValid;
 
-        void saveToDataJson(int data[]);
+        void saveToDataJson();
+        bool isValidMessage();
 };
 #endif

@@ -42,9 +42,9 @@ void SoyosourceGTNInverter::loop() {
     } else {
       data[0] = byte;
     
-      if (byteIdx == 15) { //The entire message was readed
-        saveToDataJson(data);
-        isValid = true;
+      if (byteIdx == 15) { //The entire message was read
+        saveToDataJson();
+        isValid = isValidMessage();
       }
     
       byteIdx = 1;
@@ -106,7 +106,7 @@ std::list<String> SoyosourceGTNInverter::getTopicsToSubscribe() {
     return std::list<String>();
 }
 
-void SoyosourceGTNInverter::saveToDataJson(int data[]) {
+void SoyosourceGTNInverter::saveToDataJson() {
   dataJson["pw_req"] = static_cast<uint16_t>(data[1]) * 256 + data[2];
   dataJson["mode"] = data[3];
   dataJson["error"] = data[4];
@@ -117,3 +117,11 @@ void SoyosourceGTNInverter::saveToDataJson(int data[]) {
   dataJson["temp"] = ((static_cast<uint16_t>(data[12]) * 256 + data[13])-300)*0.1;
 }
 
+bool SoyosourceGTNInverter::isValidMessage() {
+  uint8_t checksum = 0xFF;
+  for (uint8_t i = 1; i < 14; i++) {
+    checksum = checksum - data[i];
+  }
+  int recvChkSum = data[14];
+  return checksum == recvChkSum;
+}
