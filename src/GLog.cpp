@@ -83,6 +83,32 @@ void GLOG::print(const String &o) {
     }
 }
 
+size_t GLOG::printf(const char *format, ...) {
+    // based on Print.cpp
+    if (GLOG::s) {
+        va_list arg;
+        va_start(arg, format);
+        char temp[64];
+        char* buffer = temp;
+        size_t len = vsnprintf(temp, sizeof(temp), format, arg);
+        va_end(arg);
+        if (len > sizeof(temp) - 1) {
+            buffer = new char[len + 1];
+            if (!buffer) {
+                return 0;
+            }
+            va_start(arg, format);
+            vsnprintf(buffer, len + 1, format, arg);
+            va_end(arg);
+        }
+        len = GLOG::s->write((const uint8_t*) buffer, len);
+        if (buffer != temp) {
+            delete[] buffer;
+        }
+        return len;
+    }
+}
+
 void GLOG::logMqtt(char* topic, byte* payload, unsigned int length) {
     if (GLOG::s) {
         GLOG::s->print(F("MQTT: received ["));

@@ -15,7 +15,7 @@
 #ifndef _SOYOSOURCE_GTN_INVERTER_H
 #define _SOYOSOURCE_GTN_INVERTER_H
 
-#include <ArduinoJson.h>
+#include <vector>
 #include "../Inverter.h"
 
 class SoyosourceGTNInverter : public Inverter {
@@ -32,14 +32,24 @@ class SoyosourceGTNInverter : public Inverter {
     private:
         Stream *serial;
         bool shouldDeleteSerial;
-        DynamicJsonDocument dataJson;
-        uint32_t now;
-        uint32_t lastReadTime = 0;  
-        int data[16];
-        int byteIdx = 0;
-        bool isValid;
 
-        void saveToDataJson();
-        bool isValidMessage();
+        uint32_t lastReadMillis;  
+        std::vector<uint8_t> rxBuffer;
+        uint32_t unknownFrameCounter;
+        
+        bool isValid;
+        InverterData inverterData;
+
+        bool parseSoyosourceDisplayByte(uint8_t byte);
+        void decodeFrameData(const uint8_t &function, const std::vector<uint8_t> &data);
+        
+        bool extractDisplayStatusData(const std::vector<uint8_t> &data);
+        bool extractMS51StatusData(const std::vector<uint8_t> &data);
+        bool buildErrorData(const std::vector<uint8_t> &data, uint8_t response_source = 0, uint8_t function = 0);
+
+        String displayModeToString(const uint8_t &operation_mode);
+        String wifiModeToString(const uint8_t &operation_mode);
+        String errorToString(const uint8_t &mask);
+        void sendCommand(uint8_t function, uint8_t protocol);
 };
 #endif
