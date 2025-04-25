@@ -212,6 +212,10 @@ void WifiAndConfigManager::setupWifiAndConfig() {
         wm.server->on((String(FPSTR("/eraseall")).c_str()), std::bind(&WifiAndConfigManager::handleEraseAll, this));
     }
 
+    // only set this after connecting to the wifi, to let the ESP open its AP on startup
+    // if the previous wifi network is not found
+    wm.setWiFiAutoReconnect(true);
+
     GLOG::println("");
     GLOG::println(F("WiCM: WiFi connected"));
     GLOG::print(F("WiCM: IP address: "));
