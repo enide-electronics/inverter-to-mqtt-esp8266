@@ -168,7 +168,7 @@ void setup() {
 }
 
 void loop() {
-    wcm.getWM().process(); // wm web config portal
+    wcm.loop();
 
     if (isFactoryResetRequested()) {
         GLOG::println(F("LOOP: Factory reset!"));
@@ -222,14 +222,14 @@ void loop() {
     }
 
     // inverter tele report
-    if (now - lastTeleSentAtMillis > 60000) {
+    if (mqtt->isConnected() && now - lastTeleSentAtMillis > 60000) {
         GLOG::println(F("LOOP: Publishing telemetry"));
         mqtt->publishTele();
 
         lastTeleSentAtMillis = now;
     }
 
-    if (now - lastWifiCheckAtMillis > 5000) {
+    if (mqtt->isConnected() && now - lastWifiCheckAtMillis > 5000) {
         if (!wcm.isWifiConnected()) {
             leds.turnOffDefault(); // LED should recover once Wifi reconnects
         }

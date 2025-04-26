@@ -12,12 +12,14 @@
 #include <ESP8266WiFi.h>
 #include <WiFiManager.h>
 #include <ArduinoJson.h>
+#include "WiCMConfig.h"
 
 
 class WifiAndConfigManager {
     private:
         WiFiManager wm;
         
+        // Setup params
         WiFiManagerParameter *deviceNameParam;
         WiFiManagerParameter *softApPasswordParam;
         WiFiManagerParameter *mqttServerParam;
@@ -32,26 +34,22 @@ class WifiAndConfigManager {
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
         
-        String deviceName;
-        String softApPassword;
-        String mqttServer;
-        int mqttPort;
-        String mqttUsername;
-        String mqttPassword;
-        String mqttBaseTopic;
-        int modbusAddress;
-        int modbusPollingInSeconds;
-        String inverterType;
+        // setup vars
+        WiCMParamConfig paramsCfg;
+
+        // wifi params (Static IP & friends)
+        WiCMWifiConfig wifiCfg;
         
-        bool saveRequired;
+        // Flags
+        bool saveWifiStaticIPRequired;
+        bool saveParamsRequired;
         bool rebootRequired;
         bool wifiConnected;
         
-        void load();
-        void save();
         void copyFromParamsToVars();
         void show();
-        void saveConfigCallback();
+        void saveParamConfigCallback();
+        void saveWifiConfigCallback();
         void handleEraseAll();
         String getParam(String name);
         void _updateInverterTypeSelect();
@@ -73,6 +71,7 @@ class WifiAndConfigManager {
         String getInverterType();
 
         WiFiManager & getWM();
+        void loop();
         
         
         void doFactoryReset();
