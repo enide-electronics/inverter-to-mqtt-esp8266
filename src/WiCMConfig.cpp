@@ -1,4 +1,9 @@
-
+/*
+  WiCMConfig.cpp - WifiManager configurations (Wifi and Parameters)
+  
+  Written by JF enide.electronics (at) enide.net
+  Licensed under GNU GPLv3
+*/
 #include "WiCMConfig.h"
 #include "GLog.h"
 #include <ArduinoJson.h>
@@ -7,7 +12,7 @@
 // global
 #define DEFAULT_TOPIC "inverter"
 #define DEFAULT_SOFTAP_PASSWORD "12345678"
-#define DEFAULT_DEVICE_NAME "foss-inverter-esp8266"
+#define DEFAULT_DEVICE_NAME "inverter-to-mqtt-esp8266"
 
 // parameter config
 #define DEVICE_NAME_K "device_name"

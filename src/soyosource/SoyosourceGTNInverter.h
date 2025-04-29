@@ -17,6 +17,7 @@
 
 #include <vector>
 #include "../Inverter.h"
+#include "VirtualLimiter.h"
 
 class SoyosourceGTNInverter : public Inverter {
     public:
@@ -32,6 +33,8 @@ class SoyosourceGTNInverter : public Inverter {
     private:
         Stream *serial;
         bool shouldDeleteSerial;
+        
+        VirtualLimiter meter;
 
         uint32_t lastReadMillis;  
         std::vector<uint8_t> rxBuffer;

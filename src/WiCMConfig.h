@@ -1,3 +1,10 @@
+/*
+  WiCMConfig.h - WifiManager configurations (Wifi and Parameters)
+  
+  Written by JF enide.electronics (at) enide.net
+  Licensed under GNU GPLv3
+*/
+
 #ifndef WICM_CONFIG_H
 #define WICM_CONFIG_H
 

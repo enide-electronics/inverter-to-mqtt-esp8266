@@ -17,6 +17,7 @@
 
 #include "SoyosourceGTNInverter.h"
 #include "../GLog.h"
+#include "../GlobalDefs.h"
 
 #define SOF_REQUEST 0x55
 #define DISPLAY_PROTOCOL 0
@@ -74,6 +75,8 @@ void SoyosourceGTNInverter::loop() {
             this->rxBuffer.clear();
         }
     }
+
+    meter.loop();
 }
 
 static uint8_t chksum(const uint8_t data[], const uint8_t len) {
@@ -206,11 +209,26 @@ InverterData SoyosourceGTNInverter::getData(bool fullSet) {
 }
 
 void SoyosourceGTNInverter::setIncomingTopicData(const String &topic, const String &value) {
+#ifdef LARGE_ESP_BOARD
+    if (topic == "settings/power") {
+        int power = value.toInt();
+        
+        if (power < 0) power = 0;
+        if (power > 1200) power = 1200;
+        
+        meter.updateDemand(power);
+
+        GLOG::printf("INVERTER: output power = %dW\n", power);
+    }
+#endif
 }
 
 std::list<String> SoyosourceGTNInverter::getTopicsToSubscribe() {
-    // nothing yet
-    return std::list<String>();
+    std::list<String> topics;
+#ifdef LARGE_ESP_BOARD
+    topics.push_back("settings/power");
+#endif
+    return topics;
 }
 
 bool SoyosourceGTNInverter::extractDisplayStatusData(const std::vector<uint8_t> &data) {
