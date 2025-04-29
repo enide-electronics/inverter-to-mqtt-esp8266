@@ -99,8 +99,15 @@ void WifiAndConfigManager::saveWifiConfigCallback() {
             GLOG::printf("WiCM: Invalid static IP configuration\nWiCM: ipOK=%d, gwOK=%d, snOK=%d, dnsOK=%d\n", ipOK, gwOK, snOK, dnsOK);
         }
 
-        saveWifiStaticIPRequired = true;
+    } else {
+        GLOG::println("WiCM: Enabling DHCP IP");
+        wifiCfg.ip = IPAddress();
+        wifiCfg.gw = IPAddress();
+        wifiCfg.sn = IPAddress();;
+        wifiCfg.dns = IPAddress();
     }
+
+    saveWifiStaticIPRequired = true;
 }
 
 void WifiAndConfigManager::handleEraseAll() {
@@ -180,7 +187,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.setSaveConfigCallback(std::bind(&WifiAndConfigManager::saveWifiConfigCallback, this));
     wm.setSaveParamsCallback(std::bind(&WifiAndConfigManager::saveParamConfigCallback, this));
     
-    wm.setTitle("FOSS Inverter ESP8266");
+    wm.setTitle("Inverter to MQTT ESP8266");
     std::vector<const char *> menu = {"wifi", "param", "info", "sep", "restart", "exit"};
     wm.setMenu(menu);
 
