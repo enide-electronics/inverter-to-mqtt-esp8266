@@ -53,11 +53,14 @@ void VirtualLimiter::loop() {
         messageBuffer[4] = pHigh;
         messageBuffer[5] = pLow;
         
-        // Well the checksum calculation below is incorrect and the inverter will ignore messages when the checksum is incorrect
-        // If you want to test it yourself by requesting power values between 256W and 263W and see the inverter providing 0W after a couple of seconds
+        // The checksum calculation found all around the web, and seen below, is incorrect
+        // The inverter will ignore messages with incorrect checksum and resume operation in PV Mode (not PV Limit)
+        // If you want to test and see the problem by yourself:
+        // - the power value to something between 256W and 263W
+        // - wait a couple of seconds and the inverter will be in PV Mode again (not PV Limit)
         //
         // int chksum = 264 - pHigh - pLow;
-        // if (chksum >= 256) chksum = 8;  // why not just & 0xFF?
+        // if (chksum >= 256) chksum = 8;
 
         uint8_t chksum = 264 - pHigh - pLow;
         messageBuffer[7] = chksum & 0xFF; // 0xFF is not needed, this is already an 8 bit variable
