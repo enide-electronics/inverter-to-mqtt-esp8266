@@ -30,7 +30,7 @@ class WifiAndConfigManager {
         WiFiManagerParameter *modbusAddressParam;
         WiFiManagerParameter *modbusPollingInSecondsParam;
         
-        char inverterModelCustomFieldBufferStr[700];
+        char inverterModelCustomFieldBufferStr[800];
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
         

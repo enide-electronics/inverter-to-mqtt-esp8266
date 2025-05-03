@@ -7,6 +7,7 @@
 #include "TestInverter.h"
 #include "NoneInverter.h"
 #include "soyosource/SoyosourceGTNInverter.h"
+#include "voltronic/AxpertVMIII.h"
 #include "GLog.h"
 
 static GrowattInverter *createGrowattInverter(int modbusAddress, bool enableRemoteCommands, bool isTL) {
@@ -35,6 +36,19 @@ static SoyosourceGTNInverter *createSoyosourceGTNInverter() {
 #endif
 }
 
+static VoltronicAxpertVMIIIInverter *createVoltronicAxpertVMIIIInverter() {
+    #ifdef LARGE_ESP_BOARD
+    #define PIN_RX D6
+    #define PIN_TX D5
+    SoftwareSerial *_softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
+    _softSerial->begin(2400);
+    return new VoltronicAxpertVMIIIInverter(_softSerial, true);
+#else
+    Serial.begin(2400);
+    return new VoltronicAxpertVMIIIInverter(&Serial, false);
+#endif
+}
+
 // static method, caller is responsible for deleting the provided instance when no longer needed
 Inverter *InverterFactory::createInverter(String type, InverterParams params) {
     GLOG::println(String(F("FACT: inverter type ")) + type);
@@ -52,6 +66,8 @@ Inverter *InverterFactory::createInverter(String type, InverterParams params) {
         return new TestInverter();
     } else if (type == "gtn") {
         return createSoyosourceGTNInverter();
+    } else if (type == "v_a_vmiii") {
+        return createVoltronicAxpertVMIIIInverter();
     } else {
         return new NoneInverter();
     }
