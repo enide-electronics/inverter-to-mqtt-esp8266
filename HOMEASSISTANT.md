@@ -4,7 +4,7 @@ If you use [Home Assistant](https://www.home-assistant.io/), here's a preconfigu
 However, all inverter data is sent to a MQTT server of your choosing.
 In no way you are required to run [Home Assistant](https://www.home-assistant.io/) to access it.
 
-## Live data sensors (all data from input registers)
+## Growatt live data sensors (all data from input registers)
 These sensors are what you'll need to get the data from the inverter in Home Assistant.
 ```
 mqtt:
@@ -145,9 +145,15 @@ mqtt:
       unit_of_measurement: "%"
     - name: "Growatt EPS PF"
       state_topic: "growatt/EpsPF"
+    
+  binary_sensor:
+    - name: "Growatt Online"
+      state_topic: "growatt/online"
+      payload_on: "true"
+      payload_off: "false"
 ```
 
-## Settings (to change the holding registers)
+## Growatt settings (to change the holding registers)
 You'll need this if you want to make changes to the inverter, from Home Assistant.
 ```
 mqtt:
@@ -286,6 +292,113 @@ mqtt:
       retain: true
       entity_category: "config"
 ```
+
+
+## Soyosource live data sensors
+```
+mqtt:
+  binary_sensor:
+    # -------------------------------------
+    # GTN1200W online availability
+    # -------------------------------------
+    - name: "GTN1200W Online"
+      state_topic: "gtn1200w/online"
+      payload_on: "true"
+      payload_off: "false"
+
+  sensor:
+    # -------------------------------------
+    # Soyosource GTN1200W
+    # -------------------------------------
+    - name: "GTN1200W Vac"
+      state_topic: "gtn1200w/Vac"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+
+    - name: "GTN1200W Pac"
+      state_topic: "gtn1200w/Pac"
+      unit_of_measurement: "W"
+      state_class: measurement
+      device_class: power
+
+    - name: "GTN1200W Fac"
+      state_topic: "gtn1200w/Fac"
+      unit_of_measurement: "Hz"
+      state_class: measurement
+      device_class: frequency
+
+    - name: "GTN1200W Error Numeric"
+      state_topic: "gtn1200w/Error"
+
+    - name: "GTN1200W Error"
+      state_topic: "gtn1200w/ErrorString"
+
+    - name: "GTN1200W Mode Numeric"
+      state_topic: "gtn1200w/Mode"
+    
+    - name: "GTN1200W Mode"
+      state_topic: "gtn1200w/ModeString"
+
+    - name: "GTN1200W Operation Status"
+      state_topic: "gtn1200w/OperationStatus"
+    
+    - name: "GTN1200W Operation Status Numeric"
+      state_topic: "gtn1200w/OperationStatusId"
+
+    - name: "GTN1200W Battery Voltage"
+      state_topic: "gtn1200w/Vbat"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+    
+    - name: "GTN1200W Battery Current"
+          state_topic: "gtn1200w/Ibat"
+      unit_of_measurement: "A"
+      state_class: measurement
+      device_class: current
+    
+    - name: "GTN1200W Pbat"
+      state_topic: "gtn1200w/Pbat"
+      unit_of_measurement: "W"
+      state_class: measurement
+      device_class: power
+    
+    - name: "GTN1200W Temperature"
+      state_topic: "gtn1200w/Temp"
+      unit_of_measurement: "C"
+```
+
+## Soyosource GTN meter/limiter
+This is the topic and input to manually set the output power of the inverter when the ESP8266 is connected to the inverter RS485 port to simulate the limiter.
+
+```
+input_number:
+  - gtn1200w_input_demand_power:
+    name: "GTN1200W Demand Power"
+    initial: 0
+    min: 0
+    max: 1200
+    step: 1
+
+```
+
+```
+mqtt:
+  button:
+    # -------------------------
+    # soyosource gtn1200w post demand power
+    # -------------------------
+    - unique_id: gtn1200w_set_demand_power_via_mqtt_button
+      name: "GTN1200W Set Demand Power"
+      command_topic: "gtn1200w/settings/power"
+      command_template: "{{ states('input_number.gtn1200w_input_demand_power') }}"
+      qos: 0
+      retain: false
+      entity_category: "config"
+```
+
+An alternative is to create an automation that will read from one or more sensors and set the inverter output power accordingly.
 
 ## Dashboards
 To get you started really quickly and reduce the amount of editing on your Home Assistant, below is a simplified dashboard, based on the one I have on my own Home Assistant to display all the entities from the inverter data.

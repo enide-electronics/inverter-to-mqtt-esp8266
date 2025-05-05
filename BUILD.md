@@ -1,6 +1,6 @@
 # Building it
 
-This project was originally written in the Arduino "IDE" version 1.8.16 but I got tired of waiting forever for the builds to complete so I decided to try the Platform IO (VSCode) IDE.
+This project was originally written in the Arduino "IDE" version 1.8.16 but I got tired of waiting forever for the builds to complete so I decided to try the Platform IO (which runs on the Visual Studio Code) IDE.
 
 To build it, open the project in Platform IO and select one of the build tasks.
 
@@ -14,4 +14,4 @@ This project builds on top of the work of many different persons. The dependenci
 
 :warning: If you plan on running the ESP8266 board connected to your computer to debug changes you made to the code, **make sure to not power the board from the inverter serial pin 9** otherwise you'll risk frying the ESP module, your computer or the inverter. **Remove the jumper to power the board from the USB cable only.**
 
-Remember the Growatt SPH and SPA are non-isolated inverters.
+Remember the Growatt and Soyosource inverters are non-isolated inverters.
