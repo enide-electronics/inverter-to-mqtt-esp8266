@@ -98,13 +98,11 @@ And after connecting it to the display
 <img src='images/soyo-09-mod-done.jpg' width='640px'>
 
 
-The communication between the CPU and the display is serial, 5V TTL, at 9600bps 8N1. The ESP8266 is a 3.3V chip and doesn't like 5V TTL so we need to convert it from 5V to 3.3V and vice-versa using a ADUM1201 board.
+The communication between the CPU and the display is serial, 5V TTL, at 9600bps 8N1. The ESP8266 is a 3.3V chip and doesn't like 5V TTL so we need to convert it to 3.3V using a ADUM1201 board.
 
-This inverter also includes an RS485 port to connect a meter/limiter which will allow you to control how much power the inverter injects into the grid (or home).
+This inverter also includes an RS485 port, to connect a meter/limiter, which lets you control how much power the inverter injects into the grid (or home). 
 
-The code in this project supports the limiter function and this is yet anoter serial connection running at 4800bps, 8N1, under RS485.
-
-We can use the same RS485/TTL adapter board used to communicate with the Growatt MIN inverters.
+When selecting the Soyosource inverter, the meter/limiter is emulated using a second serial connection running at 4800bps, 8N1. You'll need a RS485 adapter to connect the ESP8266 to this inverter port. The same RS485/TTL adapter board, used to communicate with the Growatt MIN inverters can be used. Finally the RS485 TX/RX pins are D3 and D1 respectively (see below).
 
 Note: The meter/limiter function is totally optional and is only enabled on large ESP boards, ie not on the ESP-01 due to the lack of pins.
 
@@ -120,7 +118,7 @@ The ESP8266 + Adum1201 + RS485/TTL (for data collection and limiter function)
 <img src='images/soyo-11-esp-board-and-limiter.jpg' width='640px'>
 
 ### Optional cover
-I found someone in Germany [created a cover for the inverter underside](https://www.thingiverse.com/thing:6207012). It's a tight fit so it will not fall even when the inverter gets warm.
+I found [a cover for the inverter underside](https://www.thingiverse.com/thing:6207012) on ThingiVerse, made by [EngelbertFleischer](https://www.thingiverse.com/engelbertfleischer/designs). It's a tight fit so it will not fall even when the inverter gets warm.
 
 <img src='images/soyo-12-optional-cover-sideways.jpg' width='640px'>
 

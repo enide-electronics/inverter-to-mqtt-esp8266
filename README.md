@@ -78,7 +78,7 @@ Currently there are 5 different inverter availables:
 * Growatt MIN-XH (Grid tied, single phase)
 * Soyosource GTN (display version only with limiter)
 * Voltronic Axpert VMIII (Off-grid, currently under testing)
-* Test (A test inverter that published random values, for testing purposes)
+* Test (A test inverter that publishes random values, for testing purposes)
 * None (Default after a factory reset, will not publish anything to the MQTT server besides the telemetry)
 
 ### MQTT
