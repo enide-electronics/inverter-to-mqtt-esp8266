@@ -253,7 +253,7 @@ bool SoyosourceGTNInverter::extractDisplayStatusData(const std::vector<uint8_t> 
     inverterData.set("MeterConnected", ((bool) (data[4] & (1 << 6))) ? "yes" : "no");
     inverterData.set("OperationStatusId", (uint8_t) ((raw_status_bitmask == 0x00) ? 0 : 2));
     inverterData.set("OperationStatus", (raw_status_bitmask == 0x00) ? "Normal" : "Standby");
-    inverterData.set("ErrorBitmask", (float) raw_status_bitmask);
+    inverterData.set("ErrorBitmask", raw_status_bitmask);
     inverterData.set("ErrorString", errorToString(raw_status_bitmask));
     
     // 5     2   0x01 0xC5              Battery voltage
@@ -311,7 +311,7 @@ bool SoyosourceGTNInverter::extractMS51StatusData(const std::vector<uint8_t> &da
     inverterData.set("MeterConnected", ((bool) (data[3] & (1 << 6)) ? "yes" : "no"));
     inverterData.set("OperationStatusId", (uint8_t) ((raw_status_bitmask == 0x00) ? 0 : 2));
     inverterData.set("OperationStatus", (raw_status_bitmask == 0x00) ? "Normal" : "Standby");
-    inverterData.set("ErrorBitmask", (float) raw_status_bitmask);
+    inverterData.set("ErrorBitmask", raw_status_bitmask);
     inverterData.set("ErrorString", this->errorToString(raw_status_bitmask));
 
     // 4     2   0x01 0xC5              Battery voltage
