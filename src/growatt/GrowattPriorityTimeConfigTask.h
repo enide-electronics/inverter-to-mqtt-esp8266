@@ -21,7 +21,7 @@
 #ifndef GROWATT_PRIORITY_TIME_CONFIG_TASK_H
 #define GROWATT_PRIORITY_TIME_CONFIG_TASK_H
 
-#include "Task.h"
+#include "../Task.h"
 #include <ModbusMaster.h>
 
 typedef struct timeRange {

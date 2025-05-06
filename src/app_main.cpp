@@ -29,7 +29,7 @@
 #include "Leds.h"
 #include "WifiAndConfigManager.h"
 #include "Inverter.h"
-#include "GrowattInverter.h"
+#include "InverterFactory.h"
 #include "MqttPublisher.h"
 #include "InverterData.h"
 #include "GLog.h"
@@ -43,6 +43,11 @@
 #define SETTINGS_LED_SUBTOPIC "settings/led"
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
+#ifdef LARGE_ESP_BOARD
+#define BUTTON D2
+
+#endif
+
 WiFiClient espClient;
 Leds leds;
 
@@ -50,6 +55,7 @@ Leds leds;
 unsigned long lastReportSentAtMillis = 0;
 unsigned long lastTeleSentAtMillis = 0;
 unsigned long lastWifiCheckAtMillis = 0;
+bool areRemoteCommandsSupported = false;
 
 // led status (0 = off, 1 = on, 2 = blink when publishing data)
 uint8_t ledStatus = 2;
@@ -57,7 +63,6 @@ char mqttValueBuffer16[16];
 uint8_t tasksRedLedCounter = 0;
 
 Inverter *inverter = NULL;
-SoftwareSerial *_softSerial = NULL;
 MqttPublisher *mqtt = NULL;
 WifiAndConfigManager wcm;
 
@@ -95,16 +100,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 void setupInverter() {
-#ifdef LARGE_ESP_BOARD
-    #define PIN_RX D6
-    #define PIN_TX D5
-    _softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
-    _softSerial->begin(9600);
-    inverter = new GrowattInverter((Stream &) (*_softSerial), wcm.getModbusAddress());
-#else
-    Serial.begin(9600);
-    inverter = new GrowattInverter((Stream &) Serial, wcm.getModbusAddress());
-#endif
+    InverterParams p;
+    p.modbusAddress = wcm.getModbusAddress();
+    inverter = InverterFactory::createInverter(wcm.getInverterType(), p);
 }
 
 void setupMqtt(std::list<String> inverterSettingsTopics) {
@@ -126,36 +124,58 @@ void setupLogger() {
 void applyNewConfiguration() {
     delay(1000);
     
-    GLOG::println(F("LOOP: New config, no restart... deleting old objects"));
+    GLOG::println(F("LOOP: New config, deleting objects"));
     
     // delete old objects
     delete mqtt;
     delete inverter;
     espClient.stop();
     
-    if (_softSerial) {
-        delete _softSerial;
-        _softSerial = NULL;
-    }
-    
-    GLOG::println(F("LOOP: New config, no restart... creating new objects"));
+    GLOG::println(F("LOOP: New config, creating objects"));
     
     // set them up again
-    setupLogger();
     setupInverter();
-    setupMqtt(inverter->getTopicsToSubscribe());
+    auto topics = inverter->getTopicsToSubscribe();
+    setupMqtt(topics);
+    areRemoteCommandsSupported = topics.size() > 0;
+}
+
+bool isFactoryResetRequested() {
+#ifdef LARGE_ESP_BOARD
+    static unsigned long buttonLastReleasedMillis = millis();
+    unsigned long now = millis();
+
+    if (BUTTON == LOW && now - buttonLastReleasedMillis > 30000UL) {
+        return true;
+    } 
+
+    buttonLastReleasedMillis = millis();
+#endif
+
+    return false;
 }
 
 void setup() {
-
+#ifdef LARGE_ESP_BOARD
+    pinMode(BUTTON, INPUT_PULLUP);
+#endif
     setupLogger();
     wcm.setupWifiAndConfig();
     setupInverter();
-    setupMqtt(inverter->getTopicsToSubscribe());
+    auto topics = inverter->getTopicsToSubscribe();
+    setupMqtt(topics);
+    areRemoteCommandsSupported = topics.size() > 0;
 }
 
 void loop() {
-    wcm.getWM().process(); // wm web config portal
+    wcm.loop();
+
+    if (isFactoryResetRequested()) {
+        GLOG::println(F("LOOP: Factory reset!"));
+        wcm.doFactoryReset();
+        delay(1000);
+        ESP.restart();
+    }
 
     // handle config changes
     if (wcm.checkforConfigChanges()) {
@@ -169,6 +189,7 @@ void loop() {
     }
     
     mqtt->loop();
+    inverter->loop();
 
     unsigned long now = millis();
 
@@ -191,18 +212,24 @@ void loop() {
         
         if (ledStatus == 2) leds.dimDefault(); // Turn the LED off
         if (tasksRedLedCounter > 0) tasksRedLedCounter--;
-        if (tasksRedLedCounter == 0) leds.dimRed(); // Dim RED led
+        if (areRemoteCommandsSupported) {
+            if (tasksRedLedCounter == 0) {
+                leds.dimRed(); // Dim RED led
+            }
+        } else {
+            leds.turnOffRed();
+        }
     }
 
     // inverter tele report
-    if (now - lastTeleSentAtMillis > 60000) {
+    if (mqtt->isConnected() && now - lastTeleSentAtMillis > 60000) {
         GLOG::println(F("LOOP: Publishing telemetry"));
         mqtt->publishTele();
 
         lastTeleSentAtMillis = now;
     }
 
-    if (now - lastWifiCheckAtMillis > 5000) {
+    if (mqtt->isConnected() && now - lastWifiCheckAtMillis > 5000) {
         if (!wcm.isWifiConnected()) {
             leds.turnOffDefault(); // LED should recover once Wifi reconnects
         }

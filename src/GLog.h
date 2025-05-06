@@ -25,6 +25,7 @@ class GLOG {
         static void print(const Printable &o);
         static void println(const String &o);
         static void print(const String &o);
+        static size_t printf(const char *format, ...);
         static void logMqtt(char* topic, byte* payload, unsigned int length);
         
         static void setup();

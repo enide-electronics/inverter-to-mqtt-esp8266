@@ -8,10 +8,10 @@
   Licensed under GNU GPLv3
 */
 #include "GrowattInverter.h"
-#include "GLog.h"
+#include "../GLog.h"
 #include "GrowattTaskFactory.h"
-#include "Task.h"
-#include "ModbusUtils.h"
+#include "../Task.h"
+#include "../ModbusUtils.h"
 
 
 static uint8_t stateSequence[] = {0, 1, 3, 0, 1, 4, 0, 1, 3, 0, 1, 4, 2};
@@ -85,15 +85,15 @@ void GrowattInverter::read() {
             this->Vac1 = this->glueFloat(0, this->node->getResponseBuffer(3)); // 38
             this->Iac1 = this->glueFloat(0, this->node->getResponseBuffer(4)); // 39
             this->Pac1 = this->glueFloat(this->node->getResponseBuffer(5), this->node->getResponseBuffer(6)); // 40, 41
-    #ifdef TL_INVERTER
-            this->Vac2 = this->glueFloat(0, this->node->getResponseBuffer(7)); //42
-            this->Iac2 = this->glueFloat(0, this->node->getResponseBuffer(8)); //43
-            this->Pac2 = this->glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10)); //44, 45
+            if (this->enableTL) {
+                this->Vac2 = this->glueFloat(0, this->node->getResponseBuffer(7)); //42
+                this->Iac2 = this->glueFloat(0, this->node->getResponseBuffer(8)); //43
+                this->Pac2 = this->glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10)); //44, 45
 
-            this->Vac3 = this->glueFloat(0, this->node->getResponseBuffer(11)); //46
-            this->Iac3 = this->glueFloat(0, this->node->getResponseBuffer(12)); //47
-            this->Pac3 = this->glueFloat(this->node->getResponseBuffer(13), this->node->getResponseBuffer(14)); //48, 49
-    #endif
+                this->Vac3 = this->glueFloat(0, this->node->getResponseBuffer(11)); //46
+                this->Iac3 = this->glueFloat(0, this->node->getResponseBuffer(12)); //47
+                this->Pac3 = this->glueFloat(this->node->getResponseBuffer(13), this->node->getResponseBuffer(14)); //48, 49
+            }
             this->Etoday = this->glueFloat(this->node->getResponseBuffer(18), this->node->getResponseBuffer(19)); //53, 54
             this->Etotal = this->glueFloat(this->node->getResponseBuffer(20), this->node->getResponseBuffer(21)); //55, 56
             this->Ttotal = this->glueFloat(this->node->getResponseBuffer(22), this->node->getResponseBuffer(23)); //57, 58
@@ -151,15 +151,15 @@ void GrowattInverter::read() {
             this->EpsIac1 = this->glueFloat(0, this->node->getResponseBuffer(2)); //1069
             this->EpsPac1 = this->glueFloat(this->node->getResponseBuffer(3), this->node->getResponseBuffer(4)); //1070, 1071
 
-    #ifdef TL_INVERTER
-            this->EpsVac2 = this->glueFloat(0, this->node->getResponseBuffer(5)); //1072
-            this->EpsIac2 = this->glueFloat(0, this->node->getResponseBuffer(6)); //1073
-            this->EpsPac2 = this->glueFloat(this->node->getResponseBuffer(7), this->node->getResponseBuffer(8)); //1074, 1075
+            if (this->enableTL) {
+                this->EpsVac2 = this->glueFloat(0, this->node->getResponseBuffer(5)); //1072
+                this->EpsIac2 = this->glueFloat(0, this->node->getResponseBuffer(6)); //1073
+                this->EpsPac2 = this->glueFloat(this->node->getResponseBuffer(7), this->node->getResponseBuffer(8)); //1074, 1075
 
-            this->EpsVac3 = this->glueFloat(0, this->node->getResponseBuffer(9)); //1076
-            this->EpsIac3 = this->glueFloat(0, this->node->getResponseBuffer(10)); //1077
-            this->EpsPac3 = this->glueFloat(this->node->getResponseBuffer(11), this->node->getResponseBuffer(12)); //1078, 1079
-    #endif
+                this->EpsVac3 = this->glueFloat(0, this->node->getResponseBuffer(9)); //1076
+                this->EpsIac3 = this->glueFloat(0, this->node->getResponseBuffer(10)); //1077
+                this->EpsPac3 = this->glueFloat(this->node->getResponseBuffer(11), this->node->getResponseBuffer(12)); //1078, 1079
+            }
 
             this->EpsLoadPercent = this->glueFloat(0, this->node->getResponseBuffer(13)); //1080
             this->EpsPF = this->glueFloat(0, this->node->getResponseBuffer(14)) / 100.0; //1081
@@ -176,10 +176,14 @@ void GrowattInverter::read() {
 }
 
 
-GrowattInverter::GrowattInverter(Stream &serial, uint8_t slaveAddress) {
+GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_t slaveAddress, bool enableRemoteCommands, bool enableThreePhases) {
+    this->serial = serial;
+    this->shouldDeleteSerial = shouldDeleteSerial;
+    this->enableRemoteCommands = enableRemoteCommands;
+    this->enableTL = enableThreePhases;
 
     this->node = new ModbusMaster();
-    this->node->begin(slaveAddress, serial);
+    this->node->begin(slaveAddress, *serial);
     this->currentStateIdx = 0;
     this->lastUpdatedState = 0;
 
@@ -245,6 +249,10 @@ GrowattInverter::GrowattInverter(Stream &serial, uint8_t slaveAddress) {
 
 GrowattInverter::~GrowattInverter() {
     delete this->node;
+
+    if (this->shouldDeleteSerial) {
+        delete this->serial;
+    }
 }
 
 bool GrowattInverter::isDataValid() {
@@ -292,15 +300,16 @@ InverterData GrowattInverter::getData(bool fullSet) {
         
         data.set("Pac", this->Pac);
         data.set("Fac", this->Fac);
-#ifdef TL_INVERTER
-        data.set("Vac2", this->Vac2);
-        data.set("Iac2", this->Iac2);
-        data.set("Pac2", this->Pac2);
         
-        data.set("Vac3", this->Vac3);
-        data.set("Iac3", this->Iac3);
-        data.set("Pac3", this->Pac3);
-#endif
+        if (this->enableTL) {
+            data.set("Vac2", this->Vac2);
+            data.set("Iac2", this->Iac2);
+            data.set("Pac2", this->Pac2);
+            
+            data.set("Vac3", this->Vac3);
+            data.set("Iac3", this->Iac3);
+            data.set("Pac3", this->Pac3);
+        }
 
         data.set("Etoday", this->Etoday);
         data.set("Etotal", this->Etotal);
@@ -391,15 +400,16 @@ InverterData GrowattInverter::getData(bool fullSet) {
         data.set("EpsPac1", this->EpsPac1);
         data.set("EpsVac1", this->EpsVac1);
         data.set("EpsIac1", this->EpsIac1);
-#ifdef TL_INVERTER
-        data.set("EpsPac2", this->EpsPac2);
-        data.set("EpsVac2", this->EpsVac2);
-        data.set("EpsIac2", this->EpsIac2);
-        
-        data.set("EpsPac3", this->EpsPac3);
-        data.set("EpsVac3", this->EpsVac3);
-        data.set("EpsIac3", this->EpsIac3);
-#endif
+
+        if (this->enableTL) {
+            data.set("EpsPac2", this->EpsPac2);
+            data.set("EpsVac2", this->EpsVac2);
+            data.set("EpsIac2", this->EpsIac2);
+            
+            data.set("EpsPac3", this->EpsPac3);
+            data.set("EpsVac3", this->EpsVac3);
+            data.set("EpsIac3", this->EpsIac3);
+        }
 
         data.set("EpsLoadPercent", this->EpsLoadPercent);
         data.set("EpsPF", this->EpsPF);
@@ -429,5 +439,10 @@ void GrowattInverter::setIncomingTopicData(const String &topic, const String &va
 
 std::list<String> GrowattInverter::getTopicsToSubscribe()
 {
-   return GrowattTaskFactory::registeredSubtopics();
+    if (this->enableRemoteCommands) {
+        return GrowattTaskFactory::registeredSubtopics();
+    } else {
+        // no subscriptions, no commands
+        return std::list<String>();
+    }
 }

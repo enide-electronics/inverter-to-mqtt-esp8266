@@ -1,11 +1,12 @@
-# MQTT Topics
-Please note that the "growatt" prefix in all topics shown below is the default one. It is configurable via the web interface if you want to change it. 
+# Growatt MQTT Topics
+Please note that the "growatt" prefix in all topics shown below is the one selected for my Growatt inverter. It is configurable via the web interface if you want to change it. [See here](README.md).
 
 ## Energy Data
-Energy data is polled periodically from the inverter Input Registers, every N seconds defined via the web interface.
+Energy data is polled periodically from the inverter Input Registers, every N seconds defined via the web interface. These topics are available for all supported Growatt inverter types.
 
 | Topic                       | Units | Format | Description                                                           |
 |-----------------------------|-------|--------|-----------------------------------------------------------------------|
+| `growatt/online`            | -     | bool   | MQTT connection status (Last will and testament)                      |
 | `growatt/status`            | -     | int    | Inverter numeric status                                               |
 | `growatt/Priority`          | -     | text   | Inverter working priority (Load, Bat, Grid)                           |
 | `growatt/DerateMode`        | -     | int    | Derating due to overtemp, overvoltage, unstable frequency, etc.       |
@@ -60,7 +61,7 @@ Energy data is polled periodically from the inverter Input Registers, every N se
 
 
 ## Settings
-Inverter settings are kept in Holding Registers.
+Inverter settings are kept in Holding Registers. These are **only available for Growatt SPH inverters**.
 These can be modified by publishing messages with the correct values to the following MQTT topics:
 
 | Topic                                 | Value                                            | Parameter                                | Observations                                                        | 
@@ -137,3 +138,51 @@ Here's an example of the inverter currently working in Battery First:
 
 ## Modbus and inverter registers
 See [REGISTERS.md](REGISTERS.md) for more details.
+
+# Soyosource GTN inverter Topics
+Please note that the "gtn1200w" prefix in all topics shown below is the one selected for my Soyosource GTN 1200W inverter. It is configurable via the web interface if you want to change it. [See here](README.md).
+
+
+## Energy Data
+Energy data is polled periodically from the messages sent by the CPU to the display, every N seconds defined via the web interface.
+
+| Topic                        | Units | Format | Description                                                           |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+| `gtn1200w/online`            | -     | bool   | MQTT connection status (Last will and testament)                      |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+| `gtn1200w/Error`             | -     | int    | Numeric error value                                                   |
+| `gtn1200w/ErrorBitmask`      | -     | float  | Numeric error bitmask (no use)                                        |
+| `gtn1200w/Fac`               | Hz    | float  | Grid frequency in Hz                                                  |
+| `gtn1200w/Ibat`              | Amps  | float  | DC input current (PV or Battery)                                      |
+| `gtn1200w/MeterConnected`    | -     | bool   | `yes` if meter connected, `no` otherwise                              |
+| `gtn1200w/Mode`              | -     | int    | Inverter working mode                                                 |
+| `gtn1200w/ModeString`        | -     | text   | Inverter working mode as text                                         |
+| `gtn1200w/OperationStatus`   | -     | text   | Operation status (Normal, Standby)                                    |
+| `gtn1200w/OperationStatusId` | -     | int    | Numeric Operation status                                              |
+| `gtn1200w/Pac`               | Watts | float  | AC power being injected                                               |
+| `gtn1200w/PacMeter`          | Watts | float  | AC power requested (stuck at 257 no matter what)                      |
+| `gtn1200w/Pbat`              | Watts | float  | DC power being generated                                              |
+| `gtn1200w/Temp`              | ºC    | float  | Inverter temperature                                                  |
+| `gtn1200w/Vac`               | Volts | float  | AC grid voltage                                                       |
+| `gtn1200w/Vbat`              | Volts | float  | DC input voltage (PV or Battery)                                      |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+| `gtn1200w/tele/IP`           | -     | text   | Board IP address                                                      |
+| `gtn1200w/tele/Uptime`       | -     | text   | Uptime                                                                |
+| `gtn1200w/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+
+## Limiter / Meter function
+The limiter/meter function of the Soyosource can be used by connecting the ESP8266 via RS485 to the inverter (see the connections diagram [here](HARDWARE.md#connections-diagram)). The ESP8266 listens to the power value (in Watts), to sent to the inverter every 250ms, on the MQTT show below.
+
+| Topic                        | Units | Format | Description                                                           |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+| `gtn1200w/settings/power`    | Watts | int    | Limiter/Meter demand power (to use the inverter in `PV Limit` mode), min = 0, max = 1200   |
+|------------------------------|-------|--------|-----------------------------------------------------------------------|
+
+# Voltronic Axpert VM III
+TBD
+This is an experimental feature.
+
+## Energy data
+TBD
+Since this is an experimental feature, the topics currenctly defined may change.

@@ -33,6 +33,7 @@ class MqttPublisher {
        
         void publishData(InverterData &data);
         void publishTele();
+        void publishOnline();
         
         void setClientId(String &clientId);
         void setCallback(void (*callback)(char* topic, byte* payload, unsigned int length));

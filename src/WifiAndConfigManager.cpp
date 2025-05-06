@@ -7,38 +7,44 @@
 */
 
 #include "WifiAndConfigManager.h"
-#include <FS.h>
+#include "WiCMConfig.h"
 #include "GLog.h"
 
-#define DEVICE_NAME_K "device_name"
-#define SOFTAP_PASSWORD_K "web_password"
-#define MQTT_SERVER_K "mqtt_server"
-#define MQTT_PORT_K "mqtt_port"
-#define MQTT_USERNAME_K "mqtt_username"
-#define MQTT_PASSWORD_K "mqtt_password"
-#define MQTT_TOPIC_K "mqtt_topic"
-#define MODBUS_ADDR_K "modbus_addr"
-#define MODBUS_POLLING_K "modbus_poll_secs"
+/*
+  Future work on WiFiManager: To automatically exit from the paramsave page back to root, after saving!
+  WiFiManager: strings_en.h
+  change
+    const char HTTP_PARAMSAVED[]       PROGMEM = "<div class='msg S'>Saved<br/></div>";
+  to
+    const char HTTP_PARAMSAVED[]       PROGMEM = "<meta http-equiv='refresh' content='5;url=/' /><div class='msg S'>Saved<br/></div>";
+*/
 
-#define DEFAULT_TOPIC "growatt"
-#define DEFAULT_SOFTAP_PASSWORD "12345678"
-#define DEFAULT_DEVICE_NAME "growatt-sph-spa-esp8266"
+const char inverterTypeSelectStr[] PROGMEM = R"(
+  <label for='inverter_model'>Inverter model</label>
+  <select name="inverterModel" id="inverter_model" onchange="document.getElementById('im_key_custom').value = this.value">
+    <option value="sph">Growatt SPH</option>
+    <option value="sphtl">Growatt SPH-TL</option>
+    <option value="minxh">Growatt MIN-XH</option>
+    <option value="gtn">Soyosource GTN (display)</option>
+    <option value="v_a_vmiii">Voltronic Axpert VMIII</option>
+    <option value="test">Test</option>
+    <option value="none">None</option>
+  </select>
+  <script>
+    document.getElementById('inverter_model').value = "%s";
+    document.querySelector("[for='im_key_custom']").hidden = true;
+    document.getElementById('im_key_custom').hidden = true;
+  </script>
+  )";
+
+// do not place in PROGMEM because wm keeps the address of the const char * which then is volatile
+  const char selectStyle[] = "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>";
 
 WifiAndConfigManager::WifiAndConfigManager() {
-    saveRequired = false;
+    saveWifiStaticIPRequired = false;
+    saveParamsRequired = false;
     rebootRequired = false;
     wifiConnected = false;
-
-    // config vars
-    deviceName = DEFAULT_DEVICE_NAME;
-    softApPassword = DEFAULT_SOFTAP_PASSWORD;
-    mqttServer = "localhost";
-    mqttPort = 1883;
-    mqttUsername = "";
-    mqttPassword = "";
-    mqttBaseTopic = DEFAULT_TOPIC;
-    modbusAddress = 1;
-    modbusPollingInSeconds = 5;
     
     // config var web params
     deviceNameParam = NULL;
@@ -50,80 +56,179 @@ WifiAndConfigManager::WifiAndConfigManager() {
     mqttBaseTopicParam = NULL;
     modbusAddressParam = NULL;
     modbusPollingInSecondsParam = NULL;
+    inverterModelCustomFieldParam = NULL;
+    inverterTypeCustomHidden = NULL;
+
+    if (!SPIFFS.begin()) {
+        GLOG::println(("WiCM: FS mount failed"));
+        
+        delay(1000);
+        ESP.restart();
+    }
 }
 
-void WifiAndConfigManager::saveConfigCallback() {
-    GLOG::println("SAVE IS REQUIRED");
-    saveRequired = true;
+void WifiAndConfigManager::saveParamConfigCallback() {
+    GLOG::println(F("WiCM: Save PARAM config"));
+    saveParamsRequired = true;
+}
+
+void WifiAndConfigManager::saveWifiConfigCallback() {
+    GLOG::println(F("WiCM: Save WIFI config callback"));
+    
+    // do not try to read these fields outside this function, it will segfault
+    String ip = getParam("ip");
+    String gw = wm.server->arg("gw");
+    String sn = wm.server->arg("sn");
+    String dns = wm.server->arg("dns");
+
+    if (ip != "" && gw != "" && sn != "" && dns != "") {
+        GLOG::print(F("WiCM: STA IP: "));
+        GLOG::println(ip);
+        GLOG::print(F("WiCM: STA GW: "));
+        GLOG::println(gw);
+        GLOG::print(F("WiCM: STA SN: "));
+        GLOG::println(sn);
+        GLOG::print(F("WiCM: STADNS: "));
+        GLOG::println(dns);
+        
+        bool ipOK = wifiCfg.ip.fromString(ip);
+        bool gwOK = wifiCfg.gw.fromString(gw);
+        bool snOK = wifiCfg.sn.fromString(sn);
+        bool dnsOK = wifiCfg.dns.fromString(dns);
+
+        if (!ipOK || !gwOK || !snOK || !dnsOK) {
+            GLOG::printf("WiCM: Invalid static IP configuration\nWiCM: ipOK=%d, gwOK=%d, snOK=%d, dnsOK=%d\n", ipOK, gwOK, snOK, dnsOK);
+        }
+
+    } else {
+        GLOG::println("WiCM: Enabling DHCP IP");
+        wifiCfg.ip = IPAddress();
+        wifiCfg.gw = IPAddress();
+        wifiCfg.sn = IPAddress();;
+        wifiCfg.dns = IPAddress();
+    }
+
+    saveWifiStaticIPRequired = true;
 }
 
 void WifiAndConfigManager::handleEraseAll() {
-    GLOG::println(F("DELETE SPIFFS CONFIG"));
-    if (SPIFFS.exists(F("/config.json"))) {
-        SPIFFS.remove(F("/config.json"));
-    }
+    doFactoryReset();
 
-    GLOG::println(F("DELETE WIFI CONFIG"));
-    ESP.eraseConfig();
-    
     wm.server->send(200, F("text/plain"), F("Done! Rebooting now, please wait a few seconds."));
     
+    // needed to allow the response to be returned and the logs to be flushed
     delay(2000);
     
     ESP.restart();
 }
 
+void WifiAndConfigManager::doFactoryReset() {
+    GLOG::println(F("WiCM: DELETE CONFIG"));
+    paramsCfg.erase();
+
+    GLOG::println(F("WiCM: DELETE STATIC WIFI CONFIG"));
+    wifiCfg.erase();
+
+    GLOG::println(F("WiCM: DELETE ESP WIFI CONFIG"));
+    ESP.eraseConfig();
+
+    GLOG::println("WiCM: FACTORY RESET DONE");
+}
+
+void WifiAndConfigManager::_updateInverterTypeSelect() {
+    snprintf(inverterModelCustomFieldBufferStr, 799, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
+    inverterModelCustomFieldBufferStr[799] = '\0';
+
+    inverterModelCustomFieldParam = new WiFiManagerParameter(inverterModelCustomFieldBufferStr);
+}
+
+void WifiAndConfigManager::_recycleParams() {
+    if (deviceNameParam != NULL) delete deviceNameParam;
+    if (softApPasswordParam != NULL) delete softApPasswordParam;
+    if (mqttServerParam != NULL) delete mqttServerParam;
+    if (mqttPortParam != NULL) delete mqttPortParam;
+    if (mqttUsernameParam != NULL) delete mqttUsernameParam;
+    if (mqttPasswordParam != NULL) delete mqttPasswordParam;
+    if (mqttBaseTopicParam != NULL) delete mqttBaseTopicParam;
+    if (modbusAddressParam != NULL) delete modbusAddressParam;
+    if (modbusPollingInSecondsParam != NULL) delete modbusPollingInSecondsParam;
+    if (inverterModelCustomFieldParam != NULL) delete inverterModelCustomFieldParam;
+    if (inverterTypeCustomHidden != NULL) delete inverterTypeCustomHidden;
+}
+
 void WifiAndConfigManager::setupWifiAndConfig() {
 
-    load();
+    wifiCfg.load();
+    paramsCfg.load();
     show();
 
-    // create parameters
-    deviceNameParam = new WiFiManagerParameter("devicename", "Device Name", deviceName.c_str(), 32);
-    softApPasswordParam = new WiFiManagerParameter("wifipass", "SoftAP Password", softApPassword.c_str(), 32);
-    mqttServerParam = new WiFiManagerParameter("server", "MQTT server", mqttServer.c_str(), 40);
-    mqttPortParam = new WiFiManagerParameter("port", "MQTT port", String(mqttPort).c_str(), 6);
-    mqttUsernameParam = new WiFiManagerParameter("username", "MQTT username", String(mqttUsername).c_str(), 32);
-    mqttPasswordParam = new WiFiManagerParameter("password", "MQTT password", String(mqttPassword).c_str(), 32);
-    mqttBaseTopicParam = new WiFiManagerParameter("topic", "MQTT base topic", mqttBaseTopic.c_str(), 24);
-    modbusAddressParam = new WiFiManagerParameter("modbus", "Modbus address", String(modbusAddress).c_str(), 3);
-    modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Modbus polling (secs)", String(modbusPollingInSeconds).c_str(), 3);
+    wm.setCustomHeadElement(selectStyle);
+
+    _recycleParams();
+
+    // device params
+    deviceNameParam = new WiFiManagerParameter("devicename", "Device Name", paramsCfg.deviceName.c_str(), 32);
+    softApPasswordParam = new WiFiManagerParameter("wifipass", "SoftAP Password", paramsCfg.softApPassword.c_str(), 32);
+    
+    // MQTT params
+    mqttServerParam = new WiFiManagerParameter("server", "MQTT server", paramsCfg.mqttServer.c_str(), 40);
+    mqttPortParam = new WiFiManagerParameter("port", "MQTT port", String(paramsCfg.mqttPort).c_str(), 6);
+    mqttUsernameParam = new WiFiManagerParameter("username", "MQTT username", String(paramsCfg.mqttUsername).c_str(), 32);
+    mqttPasswordParam = new WiFiManagerParameter("password", "MQTT password", String(paramsCfg.mqttPassword).c_str(), 32);
+    mqttBaseTopicParam = new WiFiManagerParameter("topic", "MQTT base topic", paramsCfg.mqttBaseTopic.c_str(), 24);
+    
+    // inverter params
+    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", String(paramsCfg.modbusAddress).c_str(), 3);
+    modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
+    _updateInverterTypeSelect();
+    inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
+    
 
     //set config callbacks
-    wm.setSaveConfigCallback(std::bind(&WifiAndConfigManager::saveConfigCallback, this));
-    wm.setSaveParamsCallback(std::bind(&WifiAndConfigManager::saveConfigCallback, this));
+    wm.setSaveConfigCallback(std::bind(&WifiAndConfigManager::saveWifiConfigCallback, this));
+    wm.setSaveParamsCallback(std::bind(&WifiAndConfigManager::saveParamConfigCallback, this));
     
-    wm.setTitle("Growatt SPH SPA ESP8266");
-    std::vector<const char *> menu = {"wifi", "info", "param", "sep", "restart", "exit"};
+    wm.setTitle("Inverter to MQTT ESP8266");
+    std::vector<const char *> menu = {"wifi", "param", "info", "sep", "restart", "exit"};
     wm.setMenu(menu);
 
-    //add all your parameters here
+    // add device params
     wm.addParameter(deviceNameParam);
     wm.addParameter(softApPasswordParam);
+
+    // add MQTT params
     wm.addParameter(mqttServerParam);
     wm.addParameter(mqttPortParam);
     wm.addParameter(mqttUsernameParam);
     wm.addParameter(mqttPasswordParam);
     wm.addParameter(mqttBaseTopicParam);
+    
+    // add inverter params
+    wm.addParameter(inverterTypeCustomHidden); // Needs to be added before the javascript that hides it
+    wm.addParameter(inverterModelCustomFieldParam);
     wm.addParameter(modbusAddressParam);
     wm.addParameter(modbusPollingInSecondsParam);
 
-   // make static ip fields visible in Wifi menu
+    // make static ip fields visible in Wifi menu
     wm.setShowStaticFields(true);
     wm.setShowDnsFields(true);
 
     WiFi.mode(WIFI_STA);
-    WiFi.hostname(deviceName.c_str());
-    wm.setHostname(deviceName.c_str());
+    WiFi.hostname(paramsCfg.deviceName.c_str());
+    wm.setHostname(paramsCfg.deviceName.c_str());
     
     wm.setConfigPortalTimeout(60); // auto close configportal after n seconds
     wm.setAPClientCheck(true); // avoid timeout if client connected to softap
     wm.setShowInfoUpdate(false); // don't show OTA button on info page
-    
 
-    bool res = wm.autoConnect(deviceName.c_str(), softApPassword.c_str());
+    if (wifiCfg.isStaticIPConfigured()) {
+        wm.setSTAStaticIPConfig(wifiCfg.ip, wifiCfg.gw, wifiCfg.sn, wifiCfg.dns);
+    }
+    
+    // now connect with the wifi info previously stored
+    bool res = wm.autoConnect(paramsCfg.deviceName.c_str(), paramsCfg.softApPassword.c_str());
     if (!res) {
-        GLOG::println("Failed to connect to wifi, restarting...");
+        GLOG::println("WiCM: Failed to connect to wifi, restarting...");
         delay(1000);
         
         ESP.restart();
@@ -134,8 +239,8 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     }
 
     GLOG::println("");
-    GLOG::println(F("WiFi connected"));
-    GLOG::print(F("IP address: "));
+    GLOG::println(F("WiCM: WiFi connected"));
+    GLOG::print(F("WiCM: IP address: "));
     GLOG::println(WiFi.localIP());
 
     randomSeed(micros());
@@ -143,161 +248,35 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     copyFromParamsToVars();
 
     // now save it to the SPIFFS file
-    if (saveRequired) {
-        save();
-        saveRequired = false;
-    }
-}
-
-void WifiAndConfigManager::load() {
-    //read configuration from FS json
-    GLOG::println(F("Mounting FS..."));
-
-    if (SPIFFS.begin()) {
-        GLOG::println("Mounted file system");
-        if (SPIFFS.exists(F("/config.json"))) {
-            //file exists, reading and loading
-            GLOG::println(F("Reading config file"));
-            File configFile = SPIFFS.open(F("/config.json"), "r");
-            if (configFile) {
-                GLOG::println(F("Opened config file"));
-                size_t size = configFile.size();
-                // Allocate a buffer to store contents of the file.
-                std::unique_ptr<char[]> buf(new char[size]);
-
-                configFile.readBytes(buf.get(), size);
-
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-                DynamicJsonDocument json(1024);
-                auto deserializeError = deserializeJson(json, buf.get());
-                
-                if ( ! deserializeError ) {
-#else
-                DynamicJsonBuffer jsonBuffer;
-                JsonObject& json = jsonBuffer.parseObject(buf.get());
-                
-                if (json.success()) {
-#endif
-                    GLOG::println(F("\nparsed json"));
-
-                    if (json.containsKey(DEVICE_NAME_K)) {
-                        deviceName = json[DEVICE_NAME_K].as<String>();
-                    } else {
-                        deviceName = DEFAULT_DEVICE_NAME;
-                    }
-                    
-                    if (json.containsKey(SOFTAP_PASSWORD_K)) {
-                        softApPassword = json[SOFTAP_PASSWORD_K].as<String>();
-                    } else {
-                        softApPassword = DEFAULT_SOFTAP_PASSWORD;
-                    }
-                    
-                    if (json.containsKey(MQTT_SERVER_K)) {
-                        mqttServer = json[MQTT_SERVER_K].as<String>();
-                    } else {
-                        mqttServer = "";
-                    }
-
-                    if (json.containsKey(MQTT_PORT_K)) {
-                        mqttPort = json[MQTT_PORT_K];
-                    } else {
-                        mqttPort = 1883;
-                    }
-
-                    if (json.containsKey(MQTT_TOPIC_K)) {
-                        mqttBaseTopic = json[MQTT_TOPIC_K].as<String>();
-                    } else {
-                        mqttBaseTopic = DEFAULT_TOPIC;
-                    }
-                    
-                    if (json.containsKey(MQTT_USERNAME_K)) {
-                        mqttUsername = json[MQTT_USERNAME_K].as<String>();
-                    } else {
-                        mqttUsername = "";
-                    }
-                    
-                    if (json.containsKey(MQTT_PASSWORD_K)) {
-                        mqttPassword = json[MQTT_PASSWORD_K].as<String>();
-                    } else {
-                        mqttPassword = "";
-                    }
-
-                    if (json.containsKey(MODBUS_ADDR_K)) {
-                        modbusAddress = json[MODBUS_ADDR_K];
-                    } else {
-                        modbusAddress = 1;
-                    }
-                    
-                    if (json.containsKey(MODBUS_POLLING_K)) {
-                        modbusPollingInSeconds = json[MODBUS_POLLING_K];
-                    } else {
-                        modbusPollingInSeconds = 5;
-                    }
-                } else {
-                    GLOG::println(F("Failed to load json config"));
-                }
-                configFile.close();
-            }
-        }
-    } else {
-        GLOG::println(("Failed to mount FS"));
-    }
-    //end read
-
-}
-
-void WifiAndConfigManager::save() {
-    //save the custom parameters to FS
-
-    GLOG::println(F("Saving config"));
-
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-    DynamicJsonDocument json(1024);
-#else
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& json = jsonBuffer.createObject();
-#endif
-
-    json[DEVICE_NAME_K] = deviceName.c_str();
-    json[SOFTAP_PASSWORD_K] = softApPassword.c_str();
-    json[MQTT_SERVER_K] = mqttServer.c_str();
-    json[MQTT_PORT_K] = mqttPort;
-    mqttUsername.trim();
-    json[MQTT_USERNAME_K] = mqttUsername.c_str();
-    mqttPassword.trim();
-    json[MQTT_PASSWORD_K] = mqttPassword.c_str();
-    json[MQTT_TOPIC_K] = mqttBaseTopic.c_str();
-    json[MODBUS_ADDR_K] = modbusAddress;
-    json[MODBUS_POLLING_K] = modbusPollingInSeconds;
-
-    File configFile = SPIFFS.open(F("/config.json"), "w");
-    if (!configFile) {
-        GLOG::println(F("Failed to open config file for writing"));
+    if (saveParamsRequired) {
+        paramsCfg.save();
+        saveParamsRequired = false;
     }
 
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-    serializeJson(json, configFile);
-#else
-    json.printTo(configFile);
-#endif
-    configFile.close();
-
-    //end save
+    if (saveWifiStaticIPRequired) {
+        wifiCfg.save();
+        saveWifiStaticIPRequired = false;
+    }
 }
 
 void WifiAndConfigManager::copyFromParamsToVars() {
     // copy values back to our variables
-    deviceName = String(deviceNameParam->getValue());
-    softApPassword = String(softApPasswordParam->getValue());
-    mqttServer = String(mqttServerParam->getValue());
-    mqttPort = String(mqttPortParam->getValue()).toInt();
-    mqttUsername = String(mqttUsernameParam->getValue());
-    mqttUsername.trim();
-    mqttPassword = String(mqttPasswordParam->getValue());
-    mqttPassword.trim();
-    mqttBaseTopic = String(mqttBaseTopicParam->getValue());
-    modbusAddress = String(modbusAddressParam->getValue()).toInt();
-    modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
+    paramsCfg.deviceName = String(deviceNameParam->getValue());
+    paramsCfg.softApPassword = String(softApPasswordParam->getValue());
+    
+    paramsCfg.mqttServer = String(mqttServerParam->getValue());
+    paramsCfg.mqttPort = String(mqttPortParam->getValue()).toInt();
+    paramsCfg.mqttUsername = String(mqttUsernameParam->getValue());
+    paramsCfg.mqttUsername.trim();
+    paramsCfg.mqttPassword = String(mqttPasswordParam->getValue());
+    paramsCfg.mqttPassword.trim();
+    paramsCfg.mqttBaseTopic = String(mqttBaseTopicParam->getValue());
+    
+    paramsCfg.modbusAddress = String(modbusAddressParam->getValue()).toInt();
+    paramsCfg.modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
+    paramsCfg.inverterType = String(inverterTypeCustomHidden->getValue());
+
+    _updateInverterTypeSelect();
 }
 
 String WifiAndConfigManager::getParam(String name){
@@ -311,83 +290,144 @@ String WifiAndConfigManager::getParam(String name){
 
 void WifiAndConfigManager::show() {
     GLOG::println(F("---------------------------"));
-    GLOG::print(F("Device name   : "));
-    GLOG::println(deviceName);
+    GLOG::print(F("-> IP            : "));
+    if (wifiCfg.ip.isSet()) {
+        GLOG::println(wifiCfg.ip.toString());    
+    } else {
+        GLOG::println(F("<not set>"));    
+    }
+    GLOG::print(F("-> GW            : "));
+    if (wifiCfg.gw.isSet()) {
+        GLOG::println(wifiCfg.gw.toString());    
+    } else {
+        GLOG::println(F("<not set>"));    
+    }
+    GLOG::print(F("-> SN            : "));
+    if (wifiCfg.sn.isSet()) {
+        GLOG::println(wifiCfg.sn.toString());    
+    } else {
+        GLOG::println(F("<not set>"));    
+    }
+    GLOG::print(F("-> DNS           : "));
+    if (wifiCfg.dns.isSet()) {
+        GLOG::println(wifiCfg.dns.toString());    
+    } else {
+        GLOG::println(F("<not set>"));    
+    }
+
+    GLOG::println(F("---------------------------"));
+    GLOG::print(F("-> Device name   : "));
+    GLOG::println(paramsCfg.deviceName);
     
-    GLOG::print(F("SoftAP pass   : "));
-    GLOG::println(softApPassword);
+    GLOG::print(F("-> SoftAP pass   : "));
+    GLOG::println(paramsCfg.softApPassword);
     
-    GLOG::print(F("Mqtt server   : "));
-    GLOG::println(mqttServer);
+    GLOG::print(F("-> Mqtt server   : "));
+    GLOG::println(paramsCfg.mqttServer);
  
-    GLOG::print(F("Mqtt port     : "));
-    GLOG::println(mqttPort);
+    GLOG::print(F("-> Mqtt port     : "));
+    GLOG::println(paramsCfg.mqttPort);
     
-    GLOG::print(F("Mqtt Username : "));
-    GLOG::println(mqttUsername);
+    GLOG::print(F("-> Mqtt Username : "));
+    GLOG::println(paramsCfg.mqttUsername);
     
-    GLOG::print(F("Mqtt Password : "));
-    GLOG::println(mqttPassword);
+    GLOG::print(F("-> Mqtt Password : "));
+    GLOG::println(paramsCfg.mqttPassword);
     
-    GLOG::print(F("Mqtt Topic    : "));
-    GLOG::println(mqttBaseTopic);
+    GLOG::print(F("-> Mqtt Topic    : "));
+    GLOG::println(paramsCfg.mqttBaseTopic);
     
-    GLOG::print(F("Modbus Address: "));
-    GLOG::println(modbusAddress);
+    GLOG::print(F("-> Modbus Address: "));
+    GLOG::println(paramsCfg.modbusAddress);
     
-    GLOG::print(F("Modbus Poll(s): "));
-    GLOG::println(modbusPollingInSeconds);
+    GLOG::print(F("-> Modbus Poll(s): "));
+    GLOG::println(paramsCfg.modbusPollingInSeconds);
+
+    GLOG::print(F("-> Inverter type: "));
+    GLOG::println(paramsCfg.inverterType);
+    GLOG::println(F("---------------------------"));
 }
 
 String WifiAndConfigManager::getDeviceName() {
-    return deviceName;
+    return paramsCfg.deviceName;
 }
 
 String WifiAndConfigManager::getMqttServer() {
-    return mqttServer;
+    return paramsCfg.mqttServer;
 }
 
 int WifiAndConfigManager::getMqttPort() {
-    return mqttPort;
+    return paramsCfg.mqttPort;
 }
 
 String WifiAndConfigManager::getMqttUsername() {
-    return mqttUsername;
+    return paramsCfg.mqttUsername;
 }
 
 String WifiAndConfigManager::getMqttPassword() {
-    return mqttPassword;
+    return paramsCfg.mqttPassword;
 }
 
 String WifiAndConfigManager::getMqttTopic() {
-    return mqttBaseTopic;
+    return paramsCfg.mqttBaseTopic;
 }
 
 int WifiAndConfigManager::getModbusAddress() {
-    return modbusAddress;
+    return paramsCfg.modbusAddress;
 }
 
 int WifiAndConfigManager::getModbusPollingInSeconds() {
-    return modbusPollingInSeconds;
+    return paramsCfg.modbusPollingInSeconds;
+}
+
+String WifiAndConfigManager::getInverterType() {
+    return paramsCfg.inverterType;
 }
 
 WiFiManager & WifiAndConfigManager::getWM() {
     return wm;
 }
 
-bool WifiAndConfigManager::checkforConfigChanges() {
-    if (saveRequired) {
+void WifiAndConfigManager::loop() {
+    int connectRetries = 0;
+    wm.process();
+    
+    // try to handle reconnections when esp core misbehaves
+    while (!isWifiConnected()) {
+        bool connected = wm.autoConnect(paramsCfg.deviceName.c_str(), paramsCfg.softApPassword.c_str());
+
+        if (!connected && ++connectRetries > 5) {
+            GLOG::println("WiCM: Failed to connect to wifi, restarting...");
+            delay(1000);
+            
+            ESP.restart();
+        }
         
+        if (!isWifiConnected()) {
+            GLOG::printf("WiCM: Failed to connect to wifi, retry %d", connectRetries);
+        }
+
+        delay(1000);
+    }
+}
+
+bool WifiAndConfigManager::checkforConfigChanges() {
+    if (saveWifiStaticIPRequired) {
+        wifiCfg.save();
+        saveWifiStaticIPRequired = false;
+    }
+
+    if (saveParamsRequired) {
         String newDeviceName = String(deviceNameParam->getValue());
-        if (newDeviceName != deviceName) {
-            GLOG::println(String(F("New device name : ")) + newDeviceName);
+        if (newDeviceName != paramsCfg.deviceName) {
+            GLOG::println(String(F("WiCM: New device name : ")) + newDeviceName);
             rebootRequired = true;
         }
         
         copyFromParamsToVars();
         
-        save();
-        saveRequired = false;
+        paramsCfg.save();
+        saveParamsRequired = false;
         
         show();
         
@@ -405,7 +445,7 @@ bool WifiAndConfigManager::isWifiConnected() {
     bool wifiConnectedNow = WiFi.status() == WL_CONNECTED;
     
     if (wifiConnected != wifiConnectedNow) {
-        GLOG::println(String(F("Wifi")) + String(wifiConnectedNow ? F("") : F("dis")) + String("connected"));
+        GLOG::println(String(F("WiCM: WiFi ")) + String(wifiConnectedNow ? F("") : F("dis")) + String("connected"));
         wifiConnected = wifiConnectedNow;
     }
     
