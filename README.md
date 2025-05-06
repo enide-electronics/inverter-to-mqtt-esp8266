@@ -6,7 +6,7 @@ Currently this project supports several Growatt models (using the v1.24 register
 
 Since most Growatt inverters share the same register map, it was tested successfully on the **Growatt SPH 5000** **Growatt MIN 3000TL-XH** and should also work on other models like the **Growatt SPA**.
 
-The Soyosource GTN 1000/1200 W with the display is supported and the remove limiter function is also implemented.
+The Soyosource GTN 1000/1200 W with the display is supported and the RS485 limiter function is also implemented.
 
 Support for Voltronic inverters is being slowly added but currently the code for the Axpert VM III is being tested.
 
