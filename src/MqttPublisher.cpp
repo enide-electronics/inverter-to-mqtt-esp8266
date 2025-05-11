@@ -72,7 +72,7 @@ void MqttPublisher::keepConnected() {
 
         // Create a random client ID
         clientId = this->topic + "-";
-        clientId += String(random(0xffff), HEX);
+        clientId += String(ESP.getChipId(), HEX);
     
         // Attempt to connect
         bool success;
