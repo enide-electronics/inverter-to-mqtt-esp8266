@@ -225,7 +225,6 @@ void loop() {
     if (mqtt->isConnected() && now - lastTeleSentAtMillis > 60000) {
         GLOG::println(F("LOOP: Publishing telemetry"));
         mqtt->publishTele();
-        mqtt->publishOnline();
 
         lastTeleSentAtMillis = now;
     }
