@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include <list>
+#include <vector>
 #include <functional>
 #include <ModbusMaster.h>
 #include "../Task.h"
@@ -23,7 +24,7 @@
 class GrowattInverter : public Inverter
 {
     public:
-        GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_t slaveAddress, bool enableRemoteCommands, bool enableThreePhases);
+        GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<uint8_t> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases);
         virtual ~GrowattInverter();
         virtual void read();
         virtual bool isDataValid();
@@ -35,6 +36,7 @@ class GrowattInverter : public Inverter
     private:
         float glueFloat(uint16_t w1, uint16_t w2);
         void incrementStateIdx();
+        void incrementModbusAddress();
         
         Stream *serial;
         bool shouldDeleteSerial;
@@ -44,6 +46,8 @@ class GrowattInverter : public Inverter
         ModbusMaster *node;
         uint8_t currentStateIdx;
         uint8_t lastUpdatedState;
+        uint8_t currentModbusIdx;
+        std::vector<uint8_t> slaveAddresses;
 
         float Ppv1;
         float Vpv1;

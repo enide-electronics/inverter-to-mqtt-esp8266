@@ -13,6 +13,7 @@
 #include <WiFiManager.h>
 #include <ArduinoJson.h>
 #include "WiCMConfig.h"
+#include <vector>
 
 
 class WifiAndConfigManager {
@@ -66,7 +67,7 @@ class WifiAndConfigManager {
         String getMqttUsername();
         String getMqttPassword();
         String getMqttTopic();
-        int getModbusAddress();
+        std::vector<int> getModbusAddresses();
         int getModbusPollingInSeconds();
         String getInverterType();
 

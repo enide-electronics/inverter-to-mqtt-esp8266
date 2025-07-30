@@ -23,6 +23,13 @@ void GrowattInverter::incrementStateIdx() {
     }   
 }
 
+void GrowattInverter::incrementModbusAddress() {
+    currentModbusIdx += 1;
+    if (currentModbusIdx >= this->slaveAddresses.size()) {
+        currentModbusIdx = 0;
+    }
+}
+
 float GrowattInverter::glueFloat(uint16_t w1, uint16_t w0) {
   unsigned long t;
   t = w1 << 16;
@@ -172,20 +179,34 @@ void GrowattInverter::read() {
     }
     
     lastUpdatedState = stateSequence[currentStateIdx];
-    incrementStateIdx();
+    
+    // iterate currentStateIdx over all inverters before changing to the next state
+    // this will interleave data from multiple inverters over time and prevents inverters from being updated only after the entire state list has run for each of them
+    
+    incrementModbusAddress();
+    this->node->begin(this->slaveAddresses[this->currentModbusIdx], *serial);
+
+    if (this->currentModbusIdx == 0) {
+        incrementStateIdx();
+    }
 }
 
 
-GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_t slaveAddress, bool enableRemoteCommands, bool enableThreePhases) {
+GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<uint8_t> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases) {
     this->serial = serial;
     this->shouldDeleteSerial = shouldDeleteSerial;
     this->enableRemoteCommands = enableRemoteCommands;
     this->enableTL = enableThreePhases;
 
-    this->node = new ModbusMaster();
-    this->node->begin(slaveAddress, *serial);
     this->currentStateIdx = 0;
     this->lastUpdatedState = 0;
+    this->slaveAddresses = slaveAddresses;
+    this->currentModbusIdx = 0;
+    if (this->slaveAddresses.size() == 0) {
+        this->slaveAddresses = {1};
+    }
+    this->node = new ModbusMaster();
+    this->node->begin(this->slaveAddresses[this->currentModbusIdx], *serial);
 
     this->valid = false;
     this->status = 0;

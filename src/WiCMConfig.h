@@ -9,6 +9,7 @@
 #define WICM_CONFIG_H
 
 #include <Arduino.h>
+#include <vector>
 #include <IPAddress.h>
 
 // Setup vars
@@ -23,7 +24,7 @@ class WiCMParamConfig {
         String mqttUsername;
         String mqttPassword;
         String mqttBaseTopic;
-        int modbusAddress;
+        std::vector<int> modbusAddresses;
         int modbusPollingInSeconds;
         String inverterType;
         

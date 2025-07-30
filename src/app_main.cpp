@@ -101,7 +101,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
 void setupInverter() {
     InverterParams p;
-    p.modbusAddress = wcm.getModbusAddress();
+    p.modbusAddresses = wcm.getModbusAddresses();
     inverter = InverterFactory::createInverter(wcm.getInverterType(), p);
 }
 
