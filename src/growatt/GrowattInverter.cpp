@@ -192,7 +192,7 @@ void GrowattInverter::read() {
 }
 
 
-GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<uint8_t> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases) {
+GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases) {
     this->serial = serial;
     this->shouldDeleteSerial = shouldDeleteSerial;
     this->enableRemoteCommands = enableRemoteCommands;

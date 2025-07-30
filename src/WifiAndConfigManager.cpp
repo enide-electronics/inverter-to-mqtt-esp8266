@@ -12,6 +12,28 @@
 #include <string>
 #include <sstream>
 
+
+static std::string vectorToCSV(const std::vector<int>& vec) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec.size(); ++i) {
+        oss << vec[i];
+        if (i != vec.size() - 1) {
+            oss << ",";
+        }
+    }
+    return oss.str();
+}
+
+std::vector<int> csvToVector(const std::string& csv) {
+    std::vector<int> result;
+    std::istringstream iss(csv);
+    std::string token;
+    while (std::getline(iss, token, ',')) {
+        result.push_back(String(token.c_str()).toInt());
+    }
+    return result;
+}
+
 /*
   Future work on WiFiManager: To automatically exit from the paramsave page back to root, after saving!
   WiFiManager: strings_en.h
@@ -180,7 +202,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     mqttBaseTopicParam = new WiFiManagerParameter("topic", "MQTT base topic", paramsCfg.mqttBaseTopic.c_str(), 24);
     
     // inverter params
-    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", String(vectorToCSV(paramsCfg.modbusAddresses)).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
+    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     _updateInverterTypeSelect();
     inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
@@ -340,7 +362,7 @@ void WifiAndConfigManager::show() {
     GLOG::println(paramsCfg.mqttBaseTopic);
     
     GLOG::print(F("-> Modbus Addresses: "));
-    GLOG::println(vectorToCSV(paramsCfg.modbusAddresses)).c_str();
+    GLOG::println(vectorToCSV(paramsCfg.modbusAddresses).c_str());
     
     GLOG::print(F("-> Modbus Poll(s): "));
     GLOG::println(paramsCfg.modbusPollingInSeconds);
@@ -375,7 +397,7 @@ String WifiAndConfigManager::getMqttTopic() {
 }
 
 std::vector<int> WifiAndConfigManager::getModbusAddresses() {
-    return paramsCfg.modbusAddress;
+    return paramsCfg.modbusAddresses;
 }
 
 int WifiAndConfigManager::getModbusPollingInSeconds() {
@@ -452,25 +474,4 @@ bool WifiAndConfigManager::isWifiConnected() {
     }
     
     return wifiConnected;
-}
-
-static std::string vectorToCSV(const std::vector<int>& vec) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < vec.size(); ++i) {
-        oss << vec[i];
-        if (i != vec.size() - 1) {
-            oss << ",";
-        }
-    }
-    return oss.str();
-}
-
-std::vector<int> csvToVector(const std::string& csv) {
-    std::vector<int> result;
-    std::istringstream iss(csv);
-    std::string token;
-    while (std::getline(iss, token, ',')) {
-        result.push_back(std::stoi(token));
-    }
-    return result;
 }

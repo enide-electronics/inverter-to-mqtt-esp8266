@@ -172,7 +172,7 @@ void WiCMParamConfig::load() {
                 }
 
                 if (json.containsKey(MODBUS_ADDRS_K)) {
-                    modbusAddresses = json[MODBUS_ADDRS_K];
+                    modbusAddresses.push_back(json[MODBUS_ADDRS_K]);
                 } else {
                     modbusAddresses = {1};
                 }
@@ -327,7 +327,7 @@ bool WiCMWifiConfig::isStaticIPConfigured() {
  ArduinoJSON vector converter
  Source: https://arduinojson.org/v6/how-to/create-converters-for-stl-containers/
 */
-namespace ARDUINOJSON_NAMESPACE {
+namespace ArduinoJson {
 template <typename T>
 struct Converter<std::vector<T> > {
   static void toJson(const std::vector<T>& src, JsonVariant dst) {

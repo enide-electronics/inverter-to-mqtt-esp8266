@@ -24,7 +24,7 @@
 class GrowattInverter : public Inverter
 {
     public:
-        GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<uint8_t> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases);
+        GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases);
         virtual ~GrowattInverter();
         virtual void read();
         virtual bool isDataValid();
@@ -47,7 +47,7 @@ class GrowattInverter : public Inverter
         uint8_t currentStateIdx;
         uint8_t lastUpdatedState;
         uint8_t currentModbusIdx;
-        std::vector<uint8_t> slaveAddresses;
+        std::vector<int> slaveAddresses;
 
         float Ppv1;
         float Vpv1;
