@@ -58,6 +58,7 @@ void GrowattInverter::read() {
         return;
     }
     
+    GLOG::printf(" @ 0x%02x", this->slaveAddresses[this->currentModbusIdx]);
     // read data
     GLOG::print(String(", step=") + stateSequence[currentStateIdx]);
 
@@ -207,6 +208,10 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::v
     }
     this->node = new ModbusMaster();
     this->node->begin(this->slaveAddresses[this->currentModbusIdx], *serial);
+    if (this->slaveAddresses.size() > 1) {
+        GLOG::printf("INVERTER: found %d modbus address, disabled remote control\n", this->slaveAddresses.size());
+        this->enableRemoteCommands = false;
+    }
 
     this->valid = false;
     this->status = 0;

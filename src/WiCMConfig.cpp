@@ -22,7 +22,6 @@
 #define MQTT_USERNAME_K "mqtt_username"
 #define MQTT_PASSWORD_K "mqtt_password"
 #define MQTT_TOPIC_K "mqtt_topic"
-#define MODBUS_ADDR_K "modbus_addr"
 #define MODBUS_ADDRS_K "modbus_addrs"
 #define MODBUS_POLLING_K "modbus_poll_secs"
 #define INVERTER_MODEL_K "inverter_model"
@@ -172,7 +171,10 @@ void WiCMParamConfig::load() {
                 }
 
                 if (json.containsKey(MODBUS_ADDRS_K)) {
-                    modbusAddresses.push_back(json[MODBUS_ADDRS_K]);
+                    modbusAddresses.clear();
+                    for (int i : json[MODBUS_ADDRS_K].as<JsonArrayConst>()) {
+                        modbusAddresses.push_back(i);
+                    }
                 } else {
                     modbusAddresses = {1};
                 }
@@ -351,4 +353,4 @@ struct Converter<std::vector<T> > {
     return result;
   }
 };
-}  // namespace ARDUINOJSON_NAMESPACE
+}  // namespace ArduinoJson, previously ARDUINOJSON_NAMESPACE
