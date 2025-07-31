@@ -58,7 +58,7 @@ void GrowattInverter::read() {
         return;
     }
     
-    GLOG::printf(" @ 0x%02x", this->slaveAddresses[this->currentModbusIdx]);
+    GLOG::printf(" @ %d", this->slaveAddresses[this->currentModbusIdx]);
     // read data
     GLOG::print(String(", step=") + stateSequence[currentStateIdx]);
 
@@ -180,7 +180,8 @@ void GrowattInverter::read() {
     }
     
     lastUpdatedState = stateSequence[currentStateIdx];
-    
+    lastModbusIdx = this->currentModbusIdx;
+
     // iterate currentStateIdx over all inverters before changing to the next state
     // this will interleave data from multiple inverters over time and prevents inverters from being updated only after the entire state list has run for each of them
     
@@ -202,13 +203,16 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, std::v
     this->currentStateIdx = 0;
     this->lastUpdatedState = 0;
     this->slaveAddresses = slaveAddresses;
+    
     this->currentModbusIdx = 0;
+    this->lastModbusIdx = 0;
     if (this->slaveAddresses.size() == 0) {
         this->slaveAddresses = {1};
     }
+    
     this->node = new ModbusMaster();
     this->node->begin(this->slaveAddresses[this->currentModbusIdx], *serial);
-    if (this->slaveAddresses.size() > 1) {
+    if (this->slaveAddresses.size() > 1 && this->enableRemoteCommands) {
         GLOG::printf("INVERTER: found %d modbus address, disabled remote control\n", this->slaveAddresses.size());
         this->enableRemoteCommands = false;
     }
@@ -287,6 +291,11 @@ bool GrowattInverter::isDataValid() {
 
 InverterData GrowattInverter::getData(bool fullSet) {
     InverterData data;
+    
+    // only use key prefix if polling more than one inverter
+    if (this->slaveAddresses.size() > 1) {
+        data.setKeyNumericPrefix(this->slaveAddresses[lastModbusIdx]);
+    }
     
     // handle task data
     if (runningTask != NULL) {

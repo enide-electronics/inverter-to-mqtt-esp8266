@@ -47,6 +47,7 @@ class GrowattInverter : public Inverter
         uint8_t currentStateIdx;
         uint8_t lastUpdatedState;
         uint8_t currentModbusIdx;
+        uint8_t lastModbusIdx;
         std::vector<int> slaveAddresses;
 
         float Ppv1;

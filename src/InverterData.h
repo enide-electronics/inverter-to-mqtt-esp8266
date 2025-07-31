@@ -13,14 +13,18 @@
 #include <map>
 
 #define MSG_BUFFER_SIZE  (255)
+#define KEY_PATH_PREFIX_SIZE (16)
 
 class InverterData : public std::map<String, String> {   
     private:
         char msg[MSG_BUFFER_SIZE];
+        char pathPrefix[KEY_PATH_PREFIX_SIZE];
         
     public:
         InverterData();
         virtual ~InverterData();
+
+        void setKeyNumericPrefix(int prefix);
         
         void set(const char *name, float value);
 
