@@ -11,9 +11,10 @@
 
 #include <Arduino.h>
 #include <Inverter.h>
+#include <vector>
 
 struct InverterParams {
-    int modbusAddress;
+    std::vector<int> modbusAddresses;
 };
 
 class InverterFactory {

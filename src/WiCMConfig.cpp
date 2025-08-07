@@ -22,7 +22,7 @@
 #define MQTT_USERNAME_K "mqtt_username"
 #define MQTT_PASSWORD_K "mqtt_password"
 #define MQTT_TOPIC_K "mqtt_topic"
-#define MODBUS_ADDR_K "modbus_addr"
+#define MODBUS_ADDRS_K "modbus_addrs"
 #define MODBUS_POLLING_K "modbus_poll_secs"
 #define INVERTER_MODEL_K "inverter_model"
 #define PARAMS_FILE "/config.json"
@@ -51,7 +51,7 @@ WiCMParamConfig::WiCMParamConfig() {
     this->mqttUsername = "";
     this->mqttPassword = "";
     this->mqttBaseTopic = DEFAULT_TOPIC;
-    this->modbusAddress = 1;
+    this->modbusAddresses = {1};
     this->modbusPollingInSeconds = 5;
     this->inverterType = "none";
 }
@@ -78,7 +78,7 @@ void WiCMParamConfig::save() {
         mqttPassword.trim();
         json[MQTT_PASSWORD_K] = mqttPassword.c_str();
         json[MQTT_TOPIC_K] = mqttBaseTopic.c_str();
-        json[MODBUS_ADDR_K] = modbusAddress;
+        json[MODBUS_ADDRS_K] = modbusAddresses;
         json[MODBUS_POLLING_K] = modbusPollingInSeconds;
         json[INVERTER_MODEL_K] = inverterType.c_str();
 
@@ -170,10 +170,13 @@ void WiCMParamConfig::load() {
                     mqttPassword = "";
                 }
 
-                if (json.containsKey(MODBUS_ADDR_K)) {
-                    modbusAddress = json[MODBUS_ADDR_K];
+                if (json.containsKey(MODBUS_ADDRS_K)) {
+                    modbusAddresses.clear();
+                    for (int i : json[MODBUS_ADDRS_K].as<JsonArrayConst>()) {
+                        modbusAddresses.push_back(i);
+                    }
                 } else {
-                    modbusAddress = 1;
+                    modbusAddresses = {1};
                 }
                 
                 if (json.containsKey(MODBUS_POLLING_K)) {
@@ -278,7 +281,7 @@ void WiCMWifiConfig::load() {
     }
 }
 
-void WiCMWifiConfig::save() {
+void WiCMWifiConfig::save() const {
     GLOG::println(F("WiCM: save wifi file"));
 
     #if ARDUINOJSON_VERSION_MAJOR >= 6
@@ -318,6 +321,36 @@ void WiCMWifiConfig::erase() {
     eraseFile(STA_WIFI_PARAMS_FILE);
 }
 
-bool WiCMWifiConfig::isStaticIPConfigured() {
+bool WiCMWifiConfig::isStaticIPConfigured() const {
     return ip.isSet() && gw.isSet() && sn.isSet() && dns.isSet();
 }
+
+/*
+ ArduinoJSON vector converter
+ Source: https://arduinojson.org/v6/how-to/create-converters-for-stl-containers/
+*/
+namespace ArduinoJson {
+template <typename T>
+struct Converter<std::vector<T> > {
+  static void toJson(const std::vector<T>& src, JsonVariant dst) {
+    JsonArray array = dst.to<JsonArray>();
+    for (T item : src)
+      array.add(item);
+  }
+
+  static std::vector<T> fromJson(JsonVariantConst src) {
+    std::vector<T> dst;
+    for (T item : src.as<JsonArrayConst>())
+      dst.push_back(item);
+    return dst;
+  }
+
+  static bool checkJson(JsonVariantConst src) {
+    JsonArrayConst array = src;
+    bool result = array;
+    for (JsonVariantConst item : array)
+      result &= item.is<T>();
+    return result;
+  }
+};
+}  // namespace ArduinoJson, previously ARDUINOJSON_NAMESPACE
