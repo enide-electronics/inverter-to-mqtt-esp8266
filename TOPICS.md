@@ -1,3 +1,14 @@
+# Tele topics
+These topics are published every minute. The `<name>` part corresponds to value in the `MQTT base topic`.
+
+| Topic                      | Units | Format | Description                                                           |
+|----------------------------|-------|--------|-----------------------------------------------------------------------|
+| `<name>/tele/IP`           | -     | text   | Board IP address                                                      |
+| `<name>/tele/Uptime`       | -     | text   | Uptime                                                                |
+| `<name>/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
+| `<name>/tele/RSSI`         | -     | int    | ESP8266 WiFi RSSI value, between 0 and 255                            |
+|----------------------------|-------|--------|-----------------------------------------------------------------------|
+
 # Growatt MQTT Topics
 Please note that the "growatt" prefix in all topics shown below is the one selected for my Growatt inverter. It is configurable via the web interface if you want to change it. [See here](README.md).
 
@@ -190,6 +201,7 @@ Energy data is polled periodically from the messages sent by the CPU to the disp
 | `gtn1200w/tele/IP`           | -     | text   | Board IP address                                                      |
 | `gtn1200w/tele/Uptime`       | -     | text   | Uptime                                                                |
 | `gtn1200w/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
+| `gtn1200w/tele/RSSI    `     | -     | int    | ESP8266 WiFi RSSI value, between 0 and 255                            |
 |------------------------------|-------|--------|-----------------------------------------------------------------------|
 
 ## Limiter / Meter function
