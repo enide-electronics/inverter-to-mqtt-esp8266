@@ -22,6 +22,7 @@
 class MultiGrowattInverterInnerFactory {
     public:
         virtual Inverter *createInverter(Stream *serial, int modbusAddress, bool enableRemoteCommands, bool isTL) = 0;
+        virtual ~MultiGrowattInverterInnerFactory() {}
 };
 
 class MultiGrowattInverter : public Inverter
