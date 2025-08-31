@@ -135,6 +135,27 @@ Here's an example of the inverter currently working in Battery First:
 | `growatt/settings/priority/grid/t2` | `00:00 23:59` | Grid First Time 2    | Grid First Time Interval 2    |
 | `growatt/settings/priority/grid/t3` | `00:00 23:59` | Grid First Time 3    | Grid First Time Interval 3    |
 
+## Polling multiple Growatt inverters on the same RS485
+If you have more than one Growatt inverter, **of the same model**, and if they are all connected them to the same RS485 bus, you can poll their data (and do remote configuration if the code supports it) using a single ESP8266 board, also connected to the same RS485 bus.
+
+All inverters need to be configured to have a different MODBUS address to avoid communication collisions. You may have to use the inverter panel or Growatt ShineBus software to set their modbus addresses.
+
+### Configuration changes
+To enable multi-inverter mode **more than one** modbus address needs to be set in the configuration.
+
+You set all the inverters modbus addresses in the `WebUI -> Setup -> Inverter modbus address` field as a **comma-separated list** of numbers, without any spaces. Example: `1,42,6,3` assuming you have 4 inverters and their modbus addresses are 1, 3, 6 and 42.
+
+
+### Topic name changes
+All growatt topics shown in the sections above will _change slightly_ to reflect the inverter the belong to.
+
+So, if we pick the `growatt/Vpv1` topic as an example, each inverter on the bus will publish their PV1 voltages as `growatt/1/Vpv1`, `growatt/42/Vpv1`, `growatt/6/Vpv1` and `growatt/3/Vpv1`, if we have the inverters configured in the previous section.
+
+Their statuses (`growatt/status` topic) will be published to `growatt/1/status`, `growatt/42/status`, `growatt/6/status` and `growatt/3/status`.
+
+In the end you need to add modbus address between the `name` and the `subtopic` for all topics. Also for the topic names used for remote configuration: `growatt/settings/priority` -> `growatt/3/settings/priority`, etc.
+
+Basically, the pattern for the topic names in multi-inverter mode is `<inverterName>/<modbusId>/<subtopic>` while for single inverter mode is `<inverterName>/<subtopic>`
 
 ## Modbus and inverter registers
 See [REGISTERS.md](REGISTERS.md) for more details.

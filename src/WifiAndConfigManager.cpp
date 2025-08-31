@@ -9,6 +9,30 @@
 #include "WifiAndConfigManager.h"
 #include "WiCMConfig.h"
 #include "GLog.h"
+#include <string>
+#include <sstream>
+
+
+static std::string vectorToCSV(const std::vector<int>& vec) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec.size(); ++i) {
+        oss << vec[i];
+        if (i != vec.size() - 1) {
+            oss << ",";
+        }
+    }
+    return oss.str();
+}
+
+std::vector<int> csvToVector(const std::string& csv) {
+    std::vector<int> result;
+    std::istringstream iss(csv);
+    std::string token;
+    while (std::getline(iss, token, ',')) {
+        result.push_back(String(token.c_str()).toInt());
+    }
+    return result;
+}
 
 /*
   Future work on WiFiManager: To automatically exit from the paramsave page back to root, after saving!
@@ -178,7 +202,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     mqttBaseTopicParam = new WiFiManagerParameter("topic", "MQTT base topic", paramsCfg.mqttBaseTopic.c_str(), 24);
     
     // inverter params
-    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", String(paramsCfg.modbusAddress).c_str(), 3);
+    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     _updateInverterTypeSelect();
     inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
@@ -272,7 +296,7 @@ void WifiAndConfigManager::copyFromParamsToVars() {
     paramsCfg.mqttPassword.trim();
     paramsCfg.mqttBaseTopic = String(mqttBaseTopicParam->getValue());
     
-    paramsCfg.modbusAddress = String(modbusAddressParam->getValue()).toInt();
+    paramsCfg.modbusAddresses = csvToVector(modbusAddressParam->getValue());
     paramsCfg.modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
     paramsCfg.inverterType = String(inverterTypeCustomHidden->getValue());
 
@@ -337,8 +361,8 @@ void WifiAndConfigManager::show() {
     GLOG::print(F("-> Mqtt Topic    : "));
     GLOG::println(paramsCfg.mqttBaseTopic);
     
-    GLOG::print(F("-> Modbus Address: "));
-    GLOG::println(paramsCfg.modbusAddress);
+    GLOG::print(F("-> Modbus Addrs  : "));
+    GLOG::println(vectorToCSV(paramsCfg.modbusAddresses).c_str());
     
     GLOG::print(F("-> Modbus Poll(s): "));
     GLOG::println(paramsCfg.modbusPollingInSeconds);
@@ -372,8 +396,8 @@ String WifiAndConfigManager::getMqttTopic() {
     return paramsCfg.mqttBaseTopic;
 }
 
-int WifiAndConfigManager::getModbusAddress() {
-    return paramsCfg.modbusAddress;
+std::vector<int> WifiAndConfigManager::getModbusAddresses() {
+    return paramsCfg.modbusAddresses;
 }
 
 int WifiAndConfigManager::getModbusPollingInSeconds() {

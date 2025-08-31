@@ -10,6 +10,7 @@
 
 #include <Arduino.h>
 #include <IPAddress.h>
+#include <vector>
 
 // Setup vars
 class WiCMParamConfig {
@@ -23,7 +24,7 @@ class WiCMParamConfig {
         String mqttUsername;
         String mqttPassword;
         String mqttBaseTopic;
-        int modbusAddress;
+        std::vector<int> modbusAddresses;
         int modbusPollingInSeconds;
         String inverterType;
         
@@ -46,11 +47,11 @@ class WiCMWifiConfig {
         WiCMWifiConfig();
         virtual ~WiCMWifiConfig();
 
-        void save();
+        void save() const;
         void load();
         void erase();
 
-        bool isStaticIPConfigured();
+        bool isStaticIPConfigured() const;
 };
 
 #endif
