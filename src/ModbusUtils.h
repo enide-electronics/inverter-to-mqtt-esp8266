@@ -22,5 +22,16 @@ class ModbusUtils {
             }
             GLOG::print("]");
         }
+
+        static float glueFloat(uint16_t w1, uint16_t w0) {
+            unsigned long t;
+            t = w1 << 16;
+            t += w0;
+
+            float f;
+            f = t;
+            f = f / 10;
+            return f;
+        }
 };
 #endif

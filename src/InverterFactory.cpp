@@ -4,6 +4,7 @@
 #include <SoftwareSerial.h>
 
 #include "growatt/GrowattInverter.h"
+#include "growatt/MicInverter.h"
 #include "growatt/MultiGrowattInverter.h"
 #include "TestInverter.h"
 #include "NoneInverter.h"
@@ -46,7 +47,7 @@ static GrowattInverter *createGrowattInverter(int modbusAddress, bool enableRemo
 }
 
 static SoyosourceGTNInverter *createSoyosourceGTNInverter() {
-    #ifdef LARGE_ESP_BOARD
+#ifdef LARGE_ESP_BOARD
     #define PIN_RX D6
     #define PIN_TX D5
     SoftwareSerial *_softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
@@ -59,7 +60,7 @@ static SoyosourceGTNInverter *createSoyosourceGTNInverter() {
 }
 
 static VoltronicAxpertVMIIIInverter *createVoltronicAxpertVMIIIInverter() {
-    #ifdef LARGE_ESP_BOARD
+#ifdef LARGE_ESP_BOARD
     #define PIN_RX D6
     #define PIN_TX D5
     SoftwareSerial *_softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
@@ -68,6 +69,19 @@ static VoltronicAxpertVMIIIInverter *createVoltronicAxpertVMIIIInverter() {
 #else
     Serial.begin(2400);
     return new VoltronicAxpertVMIIIInverter(&Serial, false);
+#endif
+}
+
+static MicInverter *createMicInverter(int modbusAddress, bool isTL) {
+#ifdef LARGE_ESP_BOARD
+    #define PIN_RX D6
+    #define PIN_TX D5
+    SoftwareSerial *_softSerial = new SoftwareSerial(PIN_RX, PIN_TX);
+    _softSerial->begin(9600);
+    return new MicInverter(_softSerial, true, modbusAddress, isTL);
+#else
+    Serial.begin(9600);
+    return new MicInverter(&Serial, false, modbusAddress, isTL);
 #endif
 }
 
@@ -92,6 +106,12 @@ Inverter *InverterFactory::createInverter(String type, const InverterParams para
     } else if (type == "minxh") {
         // no remote control and single phase
         return createGrowattInverter(getModbusAddress(params.modbusAddresses, 1), false, false);
+    } else if (type == "mic") {
+        // no remote control, single phase
+        return createMicInverter(getModbusAddress(params.modbusAddresses, 1), false);
+    } else if (type == "mictl") {
+        // no remote control, single phase
+        return createMicInverter(getModbusAddress(params.modbusAddresses, 1), true);
     } else if (type == "test") {
         return new TestInverter();
     } else if (type == "gtn") {
