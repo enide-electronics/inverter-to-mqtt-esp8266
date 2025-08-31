@@ -43,6 +43,7 @@ void MqttPublisher::publishTele() {
     client->publish((topic + "/tele/IP").c_str(), WiFi.localIP().toString().c_str());
     client->publish((topic + "/tele/ClientID").c_str(), clientId.c_str());
     client->publish((topic + "/tele/Uptime").c_str(), uptime_formatter::getUptime().c_str());
+    client->publish((topic + "/tele/RSSI").c_str(), String(WiFi.RSSI()).c_str());
 }
 
 void MqttPublisher::publishOnline() {
