@@ -6,7 +6,7 @@ These topics are published every minute. The `<name>` part corresponds to value 
 | `<name>/tele/IP`           | -     | text   | Board IP address                                                      |
 | `<name>/tele/Uptime`       | -     | text   | Uptime                                                                |
 | `<name>/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
-| `<name>/tele/RSSI`         | -     | int    | ESP8266 WiFi RSSI value, between 0 and 255                            |
+| `<name>/tele/RSSI`         | -     | int    | ESP8266 WiFi RSSI value in dBm, negative number                       |
 |----------------------------|-------|--------|-----------------------------------------------------------------------|
 
 # Growatt MQTT Topics

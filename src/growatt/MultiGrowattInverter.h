@@ -19,10 +19,16 @@
 
 #include "../Inverter.h"
 
+class MultiGrowattInverterInnerFactory {
+    public:
+        virtual Inverter *createInverter(Stream *serial, int modbusAddress, bool enableRemoteCommands, bool isTL) = 0;
+        virtual ~MultiGrowattInverterInnerFactory() {}
+};
+
 class MultiGrowattInverter : public Inverter
 {
     public:
-        MultiGrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases);
+        MultiGrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases, MultiGrowattInverterInnerFactory *factory);
         virtual ~MultiGrowattInverter();
         virtual void read();
         virtual bool isDataValid();
@@ -39,7 +45,7 @@ class MultiGrowattInverter : public Inverter
         Stream *serial;
         bool shouldDeleteSerial;
         std::vector<int> modbusAddrs;
-        std::map<int,GrowattInverter*> inverters;
+        std::map<int,Inverter*> inverters;
 
         int currentModbusIdx;
         int lastModbusIdx;

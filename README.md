@@ -16,14 +16,14 @@ Many ideas to implement this project came from other projects, most notably:
 
 Currently, several **Growatt** inverter models, the **Soyosource** GTN with display and the **Voltronic** Axpert VM III are supported. I will add more inverters in the future.
 
-I've been getting energy data from my **Growatt SPH 5000** since 2022 with an ESP8266 running this code and recently tested it on a **Growatt MIN 3000TL-XH**, which worked fine (as expected) since most recent Growatt inverters share the same register map. So it should work on other models like the **Growatt SPA** as well.
+I've been reading energy data from my **Growatt SPH 5000** since 2022 with an ESP8266 (Wemos D1 lite mini) running this code. Recently I tested it on a **Growatt MIN 3000TL-XH** and added support for the MIC 3000-TL (and similar), which have a different register map (older map) from the one used by the SPH/SPA/MIN inverters. If you have a different Growatt inverter from the supported ones, try chosing the SPH first and if you get incorrect data, switch to the MIC one.
 
 Support for the Soyosource GTN1000W / GTN1200W with display was added on v3.0.0 and it includes the RS485 limiter/meter function. This means you can control how much power the inverter will inject into the grid/home.
 
 Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code for the Axpert VM III is included but is in a very experimental state.
 
 ## Main features
-- All configuration done via web interface (captive portal and web portal)
+- All configuration is done via web interface (captive portal and web portal)
 - Configuration is stored in SPIFFS as JSON files
 - Inverter model/type is selected in the web portal
 - Periodically polls data from the inverter and publishes it to the MQTT server via Wifi
@@ -37,6 +37,9 @@ Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code fo
     - Set **PowerRating** for battery and grid priorities
   - Soyosource GTN
     - **Output power** is configurable / limited
+- Poll multiple Growatt inverters on the same RS485 bus
+  - Each inverter should have its own modbus address
+  - Enabled in the `WebUI -> Setup -> Inverter modbus address` field by setting a list of addresses, eg: `1,2,4`
 - Prebuilt binaries, ie no need to recompile the code
 - No cloud, all energy data is under your control
 

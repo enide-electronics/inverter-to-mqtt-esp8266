@@ -15,6 +15,8 @@
 #include "WiCMConfig.h"
 #include <vector>
 
+#define _IMCFBS_SIZE 890
+
 
 class WifiAndConfigManager {
     private:
@@ -31,7 +33,7 @@ class WifiAndConfigManager {
         WiFiManagerParameter *modbusAddressParam;
         WiFiManagerParameter *modbusPollingInSecondsParam;
         
-        char inverterModelCustomFieldBufferStr[800];
+        char inverterModelCustomFieldBufferStr[_IMCFBS_SIZE];
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
         

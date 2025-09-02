@@ -107,6 +107,7 @@ size_t GLOG::printf(const char *format, ...) {
         }
         return len;
     }
+    return 0;
 }
 
 void GLOG::logMqtt(char* topic, byte* payload, unsigned int length) {

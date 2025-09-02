@@ -11,15 +11,18 @@
 #include "../Task.h"
 #include "../ModbusUtils.h"
 
-MultiGrowattInverter::MultiGrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases) {
+MultiGrowattInverter::MultiGrowattInverter(Stream *serial, bool shouldDeleteSerial, std::vector<int> slaveAddresses, bool enableRemoteCommands, bool enableThreePhases, MultiGrowattInverterInnerFactory *factory) {
     this->serial = serial;
     this->shouldDeleteSerial = shouldDeleteSerial;
     this->modbusAddrs.insert(this->modbusAddrs.end(), slaveAddresses.begin(), slaveAddresses.end());
 
     for (int modbusAddr : slaveAddresses) {
-        GrowattInverter *inverter = new GrowattInverter(serial, false, modbusAddr, enableRemoteCommands, enableThreePhases);
+        Inverter *inverter = factory->createInverter(serial, modbusAddr, enableRemoteCommands, enableThreePhases);
         this->inverters[modbusAddr] = inverter;
     }
+
+    // factory is no longer needed
+    delete factory;
 }
 
 MultiGrowattInverter::~MultiGrowattInverter() {
@@ -40,7 +43,7 @@ void MultiGrowattInverter::read() {
     int modbusAddr = this->modbusAddrs[this->currentModbusIdx];
 
     GLOG::printf(" @ %d", modbusAddr);
-    GrowattInverter *inverter = this->inverters[modbusAddr];
+    Inverter *inverter = this->inverters[modbusAddr];
     inverter->read();
 
     lastModbusIdx = this->currentModbusIdx;
@@ -49,13 +52,13 @@ void MultiGrowattInverter::read() {
 
 bool MultiGrowattInverter::isDataValid() {
     int modbusAddr = this->modbusAddrs[this->lastModbusIdx];
-    GrowattInverter *inverter = this->inverters[modbusAddr];
+    Inverter *inverter = this->inverters[modbusAddr];
     return inverter->isDataValid();
 }
 
 InverterData MultiGrowattInverter::getData(bool fullSet) {
     int modbusAddr = this->modbusAddrs[this->lastModbusIdx];
-    GrowattInverter *inverter = this->inverters[modbusAddr];
+    Inverter *inverter = this->inverters[modbusAddr];
     
     InverterData data = inverter->getData(fullSet);
 
@@ -79,7 +82,7 @@ void MultiGrowattInverter::setIncomingTopicData(const String &topic, const Strin
         return;
     }
 
-    GrowattInverter *inverter = this->inverters[modbusAddr];
+    Inverter *inverter = this->inverters[modbusAddr];
     if (inverter == NULL) {
         // no inverter for this address
         return;
@@ -95,7 +98,7 @@ std::list<String> MultiGrowattInverter::getTopicsToSubscribe() {
 
     for (auto inverterEntry : this->inverters) {
         int addr = inverterEntry.first;
-        GrowattInverter *inverter = inverterEntry.second;
+        Inverter *inverter = inverterEntry.second;
 
         std::list<String> topics = inverter->getTopicsToSubscribe();
 

@@ -33,7 +33,6 @@ class GrowattInverter : public Inverter
         virtual std::list<String> getTopicsToSubscribe();
 
     private:
-        float glueFloat(uint16_t w1, uint16_t w2);
         void incrementStateIdx();
         
         Stream *serial;

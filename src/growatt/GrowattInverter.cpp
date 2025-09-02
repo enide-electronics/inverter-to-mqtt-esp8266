@@ -23,17 +23,6 @@ void GrowattInverter::incrementStateIdx() {
     }   
 }
 
-float GrowattInverter::glueFloat(uint16_t w1, uint16_t w0) {
-  unsigned long t;
-  t = w1 << 16;
-  t += w0;
-
-  float f;
-  f = t;
-  f = f / 10;
-  return f;
-}
-
 void GrowattInverter::read() {
 
     // run tasks, if any
@@ -61,13 +50,13 @@ void GrowattInverter::read() {
             this->status = this->node->getResponseBuffer(0);
 
             // 2 PV inputs
-            this->Vpv1 = this->glueFloat(0, this->node->getResponseBuffer(3));
-            this->Ipv1 = this->glueFloat(0, this->node->getResponseBuffer(4)) / 10.0;
-            this->Ppv1 = this->glueFloat(this->node->getResponseBuffer(5), this->node->getResponseBuffer(6));
+            this->Vpv1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(3));
+            this->Ipv1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(4)) / 10.0;
+            this->Ppv1 = ModbusUtils::glueFloat(this->node->getResponseBuffer(5), this->node->getResponseBuffer(6));
 
-            this->Vpv2 = this->glueFloat(0, this->node->getResponseBuffer(7));
-            this->Ipv2 = this->glueFloat(0, this->node->getResponseBuffer(8)) / 10.0;
-            this->Ppv2 = this->glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10));
+            this->Vpv2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(7));
+            this->Ipv2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(8)) / 10.0;
+            this->Ppv2 = ModbusUtils::glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10));
 
             this->valid = true;
         } else {
@@ -79,24 +68,24 @@ void GrowattInverter::read() {
         // start reading at 35 and read up to 24 registers
         uint8_t result2 = this->node->readInputRegisters(35, 24);
         if (result2 == this->node->ku8MBSuccess) {
-            this->Pac = this->glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); // 35, 36
-            this->Fac = this->glueFloat(0, this->node->getResponseBuffer(2))/10; // 37
+            this->Pac = ModbusUtils::glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); // 35, 36
+            this->Fac = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(2))/10; // 37
 
-            this->Vac1 = this->glueFloat(0, this->node->getResponseBuffer(3)); // 38
-            this->Iac1 = this->glueFloat(0, this->node->getResponseBuffer(4)); // 39
-            this->Pac1 = this->glueFloat(this->node->getResponseBuffer(5), this->node->getResponseBuffer(6)); // 40, 41
+            this->Vac1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(3)); // 38
+            this->Iac1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(4)); // 39
+            this->Pac1 = ModbusUtils::glueFloat(this->node->getResponseBuffer(5), this->node->getResponseBuffer(6)); // 40, 41
             if (this->enableTL) {
-                this->Vac2 = this->glueFloat(0, this->node->getResponseBuffer(7)); //42
-                this->Iac2 = this->glueFloat(0, this->node->getResponseBuffer(8)); //43
-                this->Pac2 = this->glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10)); //44, 45
+                this->Vac2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(7)); //42
+                this->Iac2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(8)); //43
+                this->Pac2 = ModbusUtils::glueFloat(this->node->getResponseBuffer(9), this->node->getResponseBuffer(10)); //44, 45
 
-                this->Vac3 = this->glueFloat(0, this->node->getResponseBuffer(11)); //46
-                this->Iac3 = this->glueFloat(0, this->node->getResponseBuffer(12)); //47
-                this->Pac3 = this->glueFloat(this->node->getResponseBuffer(13), this->node->getResponseBuffer(14)); //48, 49
+                this->Vac3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(11)); //46
+                this->Iac3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(12)); //47
+                this->Pac3 = ModbusUtils::glueFloat(this->node->getResponseBuffer(13), this->node->getResponseBuffer(14)); //48, 49
             }
-            this->Etoday = this->glueFloat(this->node->getResponseBuffer(18), this->node->getResponseBuffer(19)); //53, 54
-            this->Etotal = this->glueFloat(this->node->getResponseBuffer(20), this->node->getResponseBuffer(21)); //55, 56
-            this->Ttotal = this->glueFloat(this->node->getResponseBuffer(22), this->node->getResponseBuffer(23)); //57, 58
+            this->Etoday = ModbusUtils::glueFloat(this->node->getResponseBuffer(18), this->node->getResponseBuffer(19)); //53, 54
+            this->Etotal = ModbusUtils::glueFloat(this->node->getResponseBuffer(20), this->node->getResponseBuffer(21)); //55, 56
+            this->Ttotal = ModbusUtils::glueFloat(this->node->getResponseBuffer(22), this->node->getResponseBuffer(23)); //57, 58
             
             this->valid = true;
         } else {
@@ -109,9 +98,9 @@ void GrowattInverter::read() {
         uint8_t result3 = this->node->readInputRegisters(93, 30);
         if (result3 == this->node->ku8MBSuccess) {
 
-            this->temp1 = this->glueFloat(0, this->node->getResponseBuffer(0)); //93
-            this->temp2 = this->glueFloat(0, this->node->getResponseBuffer(1)); //94
-            this->temp3 = this->glueFloat(0, this->node->getResponseBuffer(2)); //95
+            this->temp1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(0)); //93
+            this->temp2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(1)); //94
+            this->temp3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(2)); //95
             
             this->deratingMode = this->node->getResponseBuffer(11); //104
 
@@ -129,9 +118,9 @@ void GrowattInverter::read() {
         uint8_t result4 = this->node->readInputRegisters(1009, 6);
         if (result4 == this->node->ku8MBSuccess) {
             // ModbusUtils::dumpRegisters(this->node, 6);
-            this->Pdischarge = this->glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); //1009, 1010
-            this->Pcharge = this->glueFloat(this->node->getResponseBuffer(2), this->node->getResponseBuffer(3)); //1011, 1012
-            this->Vbat = this->glueFloat(0, this->node->getResponseBuffer(4)); //1013
+            this->Pdischarge = ModbusUtils::glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); //1009, 1010
+            this->Pcharge = ModbusUtils::glueFloat(this->node->getResponseBuffer(2), this->node->getResponseBuffer(3)); //1011, 1012
+            this->Vbat = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(4)); //1013
             this->SOC = this->node->getResponseBuffer(5); // 1014
             
             this->valid = true;
@@ -145,24 +134,24 @@ void GrowattInverter::read() {
         uint8_t result5 = this->node->readInputRegisters(1067, 15);
         if (result5 == this->node->ku8MBSuccess) {
 
-            this->EpsFac = this->glueFloat(0, this->node->getResponseBuffer(0)) / 10.0; //1067
+            this->EpsFac = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(0)) / 10.0; //1067
 
-            this->EpsVac1 = this->glueFloat(0, this->node->getResponseBuffer(1)); //1068
-            this->EpsIac1 = this->glueFloat(0, this->node->getResponseBuffer(2)); //1069
-            this->EpsPac1 = this->glueFloat(this->node->getResponseBuffer(3), this->node->getResponseBuffer(4)); //1070, 1071
+            this->EpsVac1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(1)); //1068
+            this->EpsIac1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(2)); //1069
+            this->EpsPac1 = ModbusUtils::glueFloat(this->node->getResponseBuffer(3), this->node->getResponseBuffer(4)); //1070, 1071
 
             if (this->enableTL) {
-                this->EpsVac2 = this->glueFloat(0, this->node->getResponseBuffer(5)); //1072
-                this->EpsIac2 = this->glueFloat(0, this->node->getResponseBuffer(6)); //1073
-                this->EpsPac2 = this->glueFloat(this->node->getResponseBuffer(7), this->node->getResponseBuffer(8)); //1074, 1075
+                this->EpsVac2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(5)); //1072
+                this->EpsIac2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(6)); //1073
+                this->EpsPac2 = ModbusUtils::glueFloat(this->node->getResponseBuffer(7), this->node->getResponseBuffer(8)); //1074, 1075
 
-                this->EpsVac3 = this->glueFloat(0, this->node->getResponseBuffer(9)); //1076
-                this->EpsIac3 = this->glueFloat(0, this->node->getResponseBuffer(10)); //1077
-                this->EpsPac3 = this->glueFloat(this->node->getResponseBuffer(11), this->node->getResponseBuffer(12)); //1078, 1079
+                this->EpsVac3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(9)); //1076
+                this->EpsIac3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(10)); //1077
+                this->EpsPac3 = ModbusUtils::glueFloat(this->node->getResponseBuffer(11), this->node->getResponseBuffer(12)); //1078, 1079
             }
 
-            this->EpsLoadPercent = this->glueFloat(0, this->node->getResponseBuffer(13)); //1080
-            this->EpsPF = this->glueFloat(0, this->node->getResponseBuffer(14)) / 100.0; //1081
+            this->EpsLoadPercent = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(13)); //1080
+            this->EpsPF = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(14)) / 100.0; //1081
             
             this->valid = true;
         } else {

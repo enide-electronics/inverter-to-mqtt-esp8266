@@ -49,6 +49,8 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
     <option value="sph">Growatt SPH</option>
     <option value="sphtl">Growatt SPH-TL</option>
     <option value="minxh">Growatt MIN-XH</option>
+    <option value="mic">Growatt MIC</option>
+    <option value="mictl">Growatt MIC-TL</option>
     <option value="gtn">Soyosource GTN (display)</option>
     <option value="v_a_vmiii">Voltronic Axpert VMIII</option>
     <option value="test">Test</option>
@@ -160,8 +162,8 @@ void WifiAndConfigManager::doFactoryReset() {
 }
 
 void WifiAndConfigManager::_updateInverterTypeSelect() {
-    snprintf(inverterModelCustomFieldBufferStr, 799, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
-    inverterModelCustomFieldBufferStr[799] = '\0';
+    snprintf(inverterModelCustomFieldBufferStr, _IMCFBS_SIZE - 1, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
+    inverterModelCustomFieldBufferStr[_IMCFBS_SIZE - 1] = '\0';
 
     inverterModelCustomFieldParam = new WiFiManagerParameter(inverterModelCustomFieldBufferStr);
 }
