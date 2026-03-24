@@ -104,6 +104,8 @@ void GrowattInverter::read() {
             
             this->deratingMode = this->node->getResponseBuffer(11); //104
 
+            this->PacCharger = ModbusUtils::glueFloat(this->node->getResponseBuffer(23), this->node->getResponseBuffer(24)); //116, 117
+
             this->Priority = this->node->getResponseBuffer(25); //118
             this->BatteryType = this->node->getResponseBuffer(26); //119
             
@@ -210,6 +212,7 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_
     this->temp3 = 0.0;
 
     this->deratingMode = 0;
+    this->PacCharger = 0.0;
     this->Priority = 0;
     this->BatteryType = 0;
 
@@ -346,6 +349,8 @@ InverterData GrowattInverter::getData(bool fullSet) {
             default:
                 data.set("Derating", "Unknown");
         }
+
+        data.set("PacCharger", this->PacCharger);
       
         switch (this->Priority) {
             case 0:

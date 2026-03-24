@@ -66,6 +66,7 @@ class GrowattInverter : public Inverter
         
         float Fac; // Hz
         float Pac; // W
+        float PacCharger; // W, only for SPH inverters
 
         float Etoday;
         float Etotal;
