@@ -14,7 +14,7 @@
 #include "../ModbusUtils.h"
 
 
-static uint8_t stateSequence[] = {0, 1, 3, 0, 1, 4, 0, 1, 3, 0, 1, 4, 2};
+static uint8_t stateSequence[] = {0, 1, 3, 5, 0, 1, 4, 5, 0, 1, 3, 5, 0, 1, 4, 2, 5};
 void GrowattInverter::incrementStateIdx() {
     currentStateIdx += 1;
     
@@ -104,8 +104,6 @@ void GrowattInverter::read() {
             
             this->deratingMode = this->node->getResponseBuffer(11); //104
 
-            this->PacCharger = ModbusUtils::glueFloat(this->node->getResponseBuffer(23), this->node->getResponseBuffer(24)); //116, 117
-
             this->Priority = this->node->getResponseBuffer(25); //118
             this->BatteryType = this->node->getResponseBuffer(26); //119
             
@@ -130,7 +128,7 @@ void GrowattInverter::read() {
             this->valid = false;
         }
         
-    } else {
+    } else if (stateSequence[currentStateIdx] == 4) {
         // EPS
         // EPS starts at register 1067 and is 15 registers long (see page 44)
         uint8_t result5 = this->node->readInputRegisters(1067, 15);
@@ -160,6 +158,16 @@ void GrowattInverter::read() {
             this->valid = false;
         }
         
+    } else {
+        // Storage power group for SPH inverters
+        // We only care about register 1128 and 1129 for the PAC_CHARGER (see page 45)
+        uint8_t result6 = this->node->readInputRegisters(1125, 8);
+        if (result6 == this->node->ku8MBSuccess) {
+            this->PacCharger = ModbusUtils::glueFloat(this->node->getResponseBuffer(3), this->node->getResponseBuffer(4)); //1128, 1129
+            this->valid = true;
+        } else {
+            this->valid = false;
+        }
     }
     
     lastUpdatedState = stateSequence[currentStateIdx];
@@ -349,8 +357,6 @@ InverterData GrowattInverter::getData(bool fullSet) {
             default:
                 data.set("Derating", "Unknown");
         }
-
-        data.set("PacCharger", this->PacCharger);
       
         switch (this->Priority) {
             case 0:
@@ -409,6 +415,11 @@ InverterData GrowattInverter::getData(bool fullSet) {
         data.set("EpsPF", this->EpsPF);
     }
     
+    if (lastUpdatedState == 5 || fullSet) {
+        // Storage power group for SPH inverters
+        data.set("PacCharger", this->PacCharger);    
+    }
+
     return data;
 }
 
