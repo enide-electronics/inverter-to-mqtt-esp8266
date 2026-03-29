@@ -66,7 +66,6 @@ class GrowattInverter : public Inverter
         
         float Fac; // Hz
         float Pac; // W
-        float PacCharger; // W, only for SPH inverters
 
         float Etoday;
         float Etotal;
@@ -84,6 +83,10 @@ class GrowattInverter : public Inverter
         float Pcharge;
         float Vbat;
         uint16_t SOC;
+
+        // Power
+        float Sac; // apparent power
+        float Qac; // reactive power
         
         // EPS output
         float EpsFac; // Hz

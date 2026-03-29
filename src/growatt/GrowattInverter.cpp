@@ -159,11 +159,12 @@ void GrowattInverter::read() {
         }
         
     } else {
-        // Storage power group for SPH inverters
-        // We only care about register 1128 and 1129 for the PAC_CHARGER (see page 45)
-        uint8_t result6 = this->node->readInputRegisters(1125, 8);
+        // Output aparent power (page 41 of the manual)
+        uint8_t result6 = this->node->readInputRegisters(230, 4);
         if (result6 == this->node->ku8MBSuccess) {
-            this->PacCharger = ModbusUtils::glueFloat(this->node->getResponseBuffer(3), this->node->getResponseBuffer(4)); //1128, 1129
+            this->Sac = ModbusUtils::glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); //230, 231
+            this->Qac = ModbusUtils::glueFloat(this->node->getResponseBuffer(2), this->node->getResponseBuffer(3)); //232, 233
+
             this->valid = true;
         } else {
             this->valid = false;
@@ -220,7 +221,6 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_
     this->temp3 = 0.0;
 
     this->deratingMode = 0;
-    this->PacCharger = 0.0;
     this->Priority = 0;
     this->BatteryType = 0;
 
@@ -228,6 +228,9 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_
     this->Pcharge = 0.0;
     this->Vbat = 0.0;
     this->SOC = 0;
+
+    this->Sac = 0.0;
+    this->Qac = 0.0;
 
     this->EpsFac = 0;
 
@@ -416,8 +419,9 @@ InverterData GrowattInverter::getData(bool fullSet) {
     }
     
     if (lastUpdatedState == 5 || fullSet) {
-        // Storage power group for SPH inverters
-        data.set("PacCharger", this->PacCharger);    
+        // Power
+        data.set("Sac", this->Sac);
+        data.set("Qac", this->Qac);
     }
 
     return data;
