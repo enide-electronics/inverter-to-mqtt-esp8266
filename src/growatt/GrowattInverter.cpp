@@ -115,13 +115,17 @@ void GrowattInverter::read() {
     } else if (stateSequence[currentStateIdx] == 3) {
         // Battery status
         // start reading at register 1009 and read up to 6 registers
-        uint8_t result4 = this->node->readInputRegisters(1009, 6);
+        uint8_t result4 = this->node->readInputRegisters(1009, 30);
         if (result4 == this->node->ku8MBSuccess) {
             // ModbusUtils::dumpRegisters(this->node, 6);
             this->Pdischarge = ModbusUtils::glueFloat(this->node->getResponseBuffer(0), this->node->getResponseBuffer(1)); //1009, 1010
             this->Pcharge = ModbusUtils::glueFloat(this->node->getResponseBuffer(2), this->node->getResponseBuffer(3)); //1011, 1012
             this->Vbat = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(4)); //1013
             this->SOC = this->node->getResponseBuffer(5); // 1014
+
+            this->PacToUser = ModbusUtils::glueFloat(this->node->getResponseBuffer(12), this->node->getResponseBuffer(13)); //1021, 1022
+            this->PacToGrid = ModbusUtils::glueFloat(this->node->getResponseBuffer(20), this->node->getResponseBuffer(21)); //1029, 1030
+            this->PacToLocalLoad = ModbusUtils::glueFloat(this->node->getResponseBuffer(28), this->node->getResponseBuffer(29)); //1037, 1038
             
             this->valid = true;
         } else {
@@ -228,6 +232,10 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_
     this->Pcharge = 0.0;
     this->Vbat = 0.0;
     this->SOC = 0;
+
+    this->PacToUser = 0.0;
+    this->PacToGrid = 0.0;
+    this->PacToLocalLoad = 0.0;
 
     this->Sac = 0.0;
     this->Qac = 0.0;
@@ -394,6 +402,9 @@ InverterData GrowattInverter::getData(bool fullSet) {
         data.set("Pcharge", this->Pcharge);
         data.set("Vbat", this->Vbat);
         data.set("SOC", this->SOC);
+        data.set("PacToUser", this->PacToUser);
+        data.set("PacToGrid", this->PacToGrid);
+        data.set("PacToLocalLoad", this->PacToLocalLoad);
     }
 
     if (lastUpdatedState == 4 || fullSet) {

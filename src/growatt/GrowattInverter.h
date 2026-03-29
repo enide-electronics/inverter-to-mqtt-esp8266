@@ -84,6 +84,10 @@ class GrowattInverter : public Inverter
         float Vbat;
         uint16_t SOC;
 
+        float PacToUser;
+        float PacToGrid;
+        float PacToLocalLoad;
+
         // Power
         float Sac; // apparent power
         float Qac; // reactive power
