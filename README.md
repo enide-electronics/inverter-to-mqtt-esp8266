@@ -24,7 +24,7 @@ Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code fo
 
 ## Main features
 - All configuration is done via web interface (captive portal and web portal)
-- Configuration is stored in SPIFFS as JSON files
+- Configuration is stored in LittleFS as JSON files
 - Inverter model/type is selected in the web portal
 - Periodically polls data from the inverter and publishes it to the MQTT server via Wifi
 - Polling period is configurable (in seconds)
@@ -54,7 +54,7 @@ Check the [releases](https://github.com/enide-electronics/inverter-to-mqtt-esp82
 See [BUILD.md](BUILD.md) for more details, if you really want to compile it on your own.
 
 ## Configuration
-Everything is **configured via WiFiManager's Captive Portal / Web Portal** and the configuration is stored in the SPIFFS file system, in JSON files.
+Everything is **configured via WiFiManager's Captive Portal / Web Portal** and the configuration is stored in the LittleFS file system, in JSON files.
 
 When powering up the board for the first time, after uploading the firmware, you are presented with a WiFi network named `inverter-to-mqtt-esp8266` from which you can start the configuration process. 
 

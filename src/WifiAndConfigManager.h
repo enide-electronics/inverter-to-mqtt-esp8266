@@ -1,6 +1,6 @@
 /*
   WifiAndConfigManager.h - Library header for the ESP8266/ESP32 Arduino platform
-  SPIFFS based configuration
+  LittleFS based configuration
 
   Written by JF enide.electronics (at) enide.net
   Licensed under GNU GPLv3

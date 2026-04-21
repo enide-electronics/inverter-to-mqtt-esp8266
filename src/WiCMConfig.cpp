@@ -8,6 +8,7 @@
 #include "GLog.h"
 #include <ArduinoJson.h>
 #include <FS.h>
+#include <LittleFS.h>
 
 // global
 #define DEFAULT_TOPIC "inverter"
@@ -44,8 +45,8 @@
 #define SHOW_JSON_FILE
 
 static void eraseFile(const char *filename) {
-    if (SPIFFS.exists(filename)) {
-        SPIFFS.remove(filename);
+    if (LittleFS.exists(filename)) {
+        LittleFS.remove(filename);
     }
 }
 
@@ -96,7 +97,7 @@ void WiCMParamConfig::save() {
     json[TEMP_CTRL_TH_ON_K] = tempCtrlThresholdOn;
     json[TEMP_CTRL_TH_OFF_K] = tempCtrlThresholdOff;
 
-    File configFile = SPIFFS.open(F(PARAMS_FILE), "w");
+    File configFile = LittleFS.open(F(PARAMS_FILE), "w");
     if (!configFile) {
         GLOG::println(F("WiCM: Save failed"));
     }
@@ -109,9 +110,9 @@ void WiCMParamConfig::save() {
 
 void WiCMParamConfig::load() {
     //read configuration from FS json
-    if (SPIFFS.exists(F(PARAMS_FILE))) {
+    if (LittleFS.exists(F(PARAMS_FILE))) {
         GLOG::println(F("WiCM: read config file"));
-        File configFile = SPIFFS.open(F(PARAMS_FILE), "r");
+        File configFile = LittleFS.open(F(PARAMS_FILE), "r");
         if (configFile) {
             GLOG::println(F("WiCM: open config file OK"));
             size_t size = configFile.size();
@@ -185,9 +186,9 @@ WiCMWifiConfig::~WiCMWifiConfig() {
 }
 
 void WiCMWifiConfig::load() {
-    if (SPIFFS.exists(F(STA_WIFI_PARAMS_FILE))) {
+    if (LittleFS.exists(F(STA_WIFI_PARAMS_FILE))) {
         GLOG::println(F("WiCM: read wifi file"));
-        File networkFile = SPIFFS.open(F(STA_WIFI_PARAMS_FILE), "r");
+        File networkFile = LittleFS.open(F(STA_WIFI_PARAMS_FILE), "r");
         if (networkFile) {
             GLOG::println(F("WiCM: open wifi file OK"));
             size_t size = networkFile.size();
@@ -259,7 +260,7 @@ void WiCMWifiConfig::save() const {
         json[DNS_K] = dns.toString();
     }
 
-    File networkFile = SPIFFS.open(F(STA_WIFI_PARAMS_FILE), "w");
+    File networkFile = LittleFS.open(F(STA_WIFI_PARAMS_FILE), "w");
     if (!networkFile) {
         GLOG::println(F("WiCM: save wifi file failed"));
     }

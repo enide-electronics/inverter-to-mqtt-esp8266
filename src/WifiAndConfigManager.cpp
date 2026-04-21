@@ -1,6 +1,6 @@
 /*
   WifiAndConfigManager.cpp - Library for the ESP8266/ESP32 Arduino platform
-  SPIFFS based configuration
+  LittleFS based configuration
 
   Written by JF enide.electronics (at) enide.net
   Licensed under GNU GPLv3
@@ -9,6 +9,7 @@
 #include "WifiAndConfigManager.h"
 #include "WiCMConfig.h"
 #include "GLog.h"
+#include <LittleFS.h>
 #include <string>
 #include <sstream>
 
@@ -118,7 +119,7 @@ WifiAndConfigManager::WifiAndConfigManager() {
     tempCtrlThresholdOnParam = NULL;
     tempCtrlThresholdOffParam = NULL;
 
-    if (!SPIFFS.begin()) {
+    if (!LittleFS.begin()) {
         GLOG::println(("WiCM: FS mount failed"));
         
         delay(1000);
@@ -337,7 +338,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
 
     copyFromParamsToVars();
 
-    // now save it to the SPIFFS file
+    // now save it to the LittleFS file
     if (saveParamsRequired) {
         paramsCfg.save();
         saveParamsRequired = false;
