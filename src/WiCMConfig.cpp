@@ -25,6 +25,12 @@
 #define MODBUS_ADDRS_K "modbus_addrs"
 #define MODBUS_POLLING_K "modbus_poll_secs"
 #define INVERTER_MODEL_K "inverter_model"
+#define TEMP_CTRL_ENABLED_K "tc_enabled"
+#define TEMP_CTRL_TOPIC_K "tc_topic"
+#define TEMP_CTRL_ON_K "tc_on"
+#define TEMP_CTRL_OFF_K "tc_off"
+#define TEMP_CTRL_TH_ON_K "tc_th_on"
+#define TEMP_CTRL_TH_OFF_K "tc_th_off"
 #define PARAMS_FILE "/config.json"
 
 // wifi config 
@@ -54,6 +60,12 @@ WiCMParamConfig::WiCMParamConfig() {
     this->modbusAddresses = {1};
     this->modbusPollingInSeconds = 5;
     this->inverterType = "none";
+    this->tempCtrlEnabled = false;
+    this->tempCtrlTopic = "";
+    this->tempCtrlPayloadOn = "ON";
+    this->tempCtrlPayloadOff = "OFF";
+    this->tempCtrlThresholdOn = 40.0f;
+    this->tempCtrlThresholdOff = 35.0f;
 }
 WiCMParamConfig::~WiCMParamConfig(){};
 
@@ -81,6 +93,13 @@ void WiCMParamConfig::save() {
         json[MODBUS_ADDRS_K] = modbusAddresses;
         json[MODBUS_POLLING_K] = modbusPollingInSeconds;
         json[INVERTER_MODEL_K] = inverterType.c_str();
+        json[TEMP_CTRL_ENABLED_K] = tempCtrlEnabled;
+        tempCtrlTopic.trim();
+        json[TEMP_CTRL_TOPIC_K] = tempCtrlTopic.c_str();
+        json[TEMP_CTRL_ON_K] = tempCtrlPayloadOn.c_str();
+        json[TEMP_CTRL_OFF_K] = tempCtrlPayloadOff.c_str();
+        json[TEMP_CTRL_TH_ON_K] = tempCtrlThresholdOn;
+        json[TEMP_CTRL_TH_OFF_K] = tempCtrlThresholdOff;
 
         File configFile = SPIFFS.open(F(PARAMS_FILE), "w");
         if (!configFile) {
@@ -192,6 +211,42 @@ void WiCMParamConfig::load() {
                     }
                 } else {
                     inverterType = "none";
+                }
+
+                if (json.containsKey(TEMP_CTRL_ENABLED_K)) {
+                    tempCtrlEnabled = json[TEMP_CTRL_ENABLED_K].as<bool>();
+                } else {
+                    tempCtrlEnabled = false;
+                }
+
+                if (json.containsKey(TEMP_CTRL_TOPIC_K)) {
+                    tempCtrlTopic = json[TEMP_CTRL_TOPIC_K].as<String>();
+                } else {
+                    tempCtrlTopic = "";
+                }
+
+                if (json.containsKey(TEMP_CTRL_ON_K)) {
+                    tempCtrlPayloadOn = json[TEMP_CTRL_ON_K].as<String>();
+                } else {
+                    tempCtrlPayloadOn = "ON";
+                }
+
+                if (json.containsKey(TEMP_CTRL_OFF_K)) {
+                    tempCtrlPayloadOff = json[TEMP_CTRL_OFF_K].as<String>();
+                } else {
+                    tempCtrlPayloadOff = "OFF";
+                }
+
+                if (json.containsKey(TEMP_CTRL_TH_ON_K)) {
+                    tempCtrlThresholdOn = json[TEMP_CTRL_TH_ON_K].as<float>();
+                } else {
+                    tempCtrlThresholdOn = 40.0f;
+                }
+
+                if (json.containsKey(TEMP_CTRL_TH_OFF_K)) {
+                    tempCtrlThresholdOff = json[TEMP_CTRL_TH_OFF_K].as<float>();
+                } else {
+                    tempCtrlThresholdOff = 35.0f;
                 }
             } else {
                 GLOG::println(F("WiCM: config file parse error"));

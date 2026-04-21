@@ -66,6 +66,31 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // do not place in PROGMEM because wm keeps the address of the const char * which then is volatile
   const char selectStyle[] = "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>";
 
+const char tempCtrlSectionHeaderStr[] PROGMEM = R"(
+  <hr>
+  <h3 style="margin-top:1em;">Temperature controller</h3>
+  <p style="font-size:0.9em;margin:0 0 .5em 0;">
+    Publishes an ON/OFF message to another device based on the inverter
+    temperature (evaluated every minute).
+  </p>
+  )";
+
+// The temperature controller "enabled" flag is submitted through a hidden text
+// input ("tc_en_hidden") holding "0" or "1". A checkbox, with no name, updates
+// the hidden input via JS when toggled, so the value is posted as part of the
+// regular form submit.
+const char tempCtrlEnabledCustomStr[] PROGMEM = R"(
+  <label style="display:flex;align-items:center;gap:.5em;margin:.5em 0;">
+    <input type="checkbox" id="tc_en_cb" onchange="document.getElementById('tc_en_hidden').value = this.checked ? '1' : '0'">
+    <span>Enable temperature controller</span>
+  </label>
+  <script>
+    document.getElementById('tc_en_cb').checked = (%s == "1");
+    document.querySelector("[for='tc_en_hidden']").hidden = true;
+    document.getElementById('tc_en_hidden').hidden = true;
+  </script>
+  )";
+
 WifiAndConfigManager::WifiAndConfigManager() {
     saveWifiStaticIPRequired = false;
     saveParamsRequired = false;
@@ -84,6 +109,14 @@ WifiAndConfigManager::WifiAndConfigManager() {
     modbusPollingInSecondsParam = NULL;
     inverterModelCustomFieldParam = NULL;
     inverterTypeCustomHidden = NULL;
+    tempCtrlSectionHeaderParam = NULL;
+    tempCtrlEnabledCustomParam = NULL;
+    tempCtrlEnabledHidden = NULL;
+    tempCtrlTopicParam = NULL;
+    tempCtrlPayloadOnParam = NULL;
+    tempCtrlPayloadOffParam = NULL;
+    tempCtrlThresholdOnParam = NULL;
+    tempCtrlThresholdOffParam = NULL;
 
     if (!SPIFFS.begin()) {
         GLOG::println(("WiCM: FS mount failed"));
@@ -180,6 +213,14 @@ void WifiAndConfigManager::_recycleParams() {
     if (modbusPollingInSecondsParam != NULL) delete modbusPollingInSecondsParam;
     if (inverterModelCustomFieldParam != NULL) delete inverterModelCustomFieldParam;
     if (inverterTypeCustomHidden != NULL) delete inverterTypeCustomHidden;
+    if (tempCtrlSectionHeaderParam != NULL) delete tempCtrlSectionHeaderParam;
+    if (tempCtrlEnabledCustomParam != NULL) delete tempCtrlEnabledCustomParam;
+    if (tempCtrlEnabledHidden != NULL) delete tempCtrlEnabledHidden;
+    if (tempCtrlTopicParam != NULL) delete tempCtrlTopicParam;
+    if (tempCtrlPayloadOnParam != NULL) delete tempCtrlPayloadOnParam;
+    if (tempCtrlPayloadOffParam != NULL) delete tempCtrlPayloadOffParam;
+    if (tempCtrlThresholdOnParam != NULL) delete tempCtrlThresholdOnParam;
+    if (tempCtrlThresholdOffParam != NULL) delete tempCtrlThresholdOffParam;
 }
 
 void WifiAndConfigManager::setupWifiAndConfig() {
@@ -208,6 +249,19 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     _updateInverterTypeSelect();
     inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
+
+    // temperature controller params
+    tempCtrlSectionHeaderParam = new WiFiManagerParameter(tempCtrlSectionHeaderStr);
+    snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
+             paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
+    tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
+    tempCtrlEnabledCustomParam = new WiFiManagerParameter(tempCtrlEnabledBuffer);
+    tempCtrlEnabledHidden = new WiFiManagerParameter("tc_en_hidden", "Temp controller enabled (hidden)", paramsCfg.tempCtrlEnabled ? "1" : "0", 2);
+    tempCtrlTopicParam = new WiFiManagerParameter("tc_topic", "Target MQTT topic (absolute, e.g. fan/cmd)", paramsCfg.tempCtrlTopic.c_str(), 96);
+    tempCtrlPayloadOnParam = new WiFiManagerParameter("tc_on", "Payload ON", paramsCfg.tempCtrlPayloadOn.c_str(), 24);
+    tempCtrlPayloadOffParam = new WiFiManagerParameter("tc_off", "Payload OFF", paramsCfg.tempCtrlPayloadOff.c_str(), 24);
+    tempCtrlThresholdOnParam = new WiFiManagerParameter("tc_th_on", "Turn ON above (&deg;C)", String(paramsCfg.tempCtrlThresholdOn, 1).c_str(), 6);
+    tempCtrlThresholdOffParam = new WiFiManagerParameter("tc_th_off", "Turn OFF below (&deg;C)", String(paramsCfg.tempCtrlThresholdOff, 1).c_str(), 6);
     
 
     //set config callbacks
@@ -234,6 +288,16 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(inverterModelCustomFieldParam);
     wm.addParameter(modbusAddressParam);
     wm.addParameter(modbusPollingInSecondsParam);
+
+    // temperature controller params
+    wm.addParameter(tempCtrlSectionHeaderParam);
+    wm.addParameter(tempCtrlEnabledHidden);       // must be registered before the checkbox JS targets it
+    wm.addParameter(tempCtrlEnabledCustomParam);
+    wm.addParameter(tempCtrlTopicParam);
+    wm.addParameter(tempCtrlPayloadOnParam);
+    wm.addParameter(tempCtrlPayloadOffParam);
+    wm.addParameter(tempCtrlThresholdOnParam);
+    wm.addParameter(tempCtrlThresholdOffParam);
 
     // make static ip fields visible in Wifi menu
     wm.setShowStaticFields(true);
@@ -301,6 +365,15 @@ void WifiAndConfigManager::copyFromParamsToVars() {
     paramsCfg.modbusAddresses = csvToVector(modbusAddressParam->getValue());
     paramsCfg.modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
     paramsCfg.inverterType = String(inverterTypeCustomHidden->getValue());
+
+    // temperature controller values
+    paramsCfg.tempCtrlEnabled = String(tempCtrlEnabledHidden->getValue()) == "1";
+    paramsCfg.tempCtrlTopic = String(tempCtrlTopicParam->getValue());
+    paramsCfg.tempCtrlTopic.trim();
+    paramsCfg.tempCtrlPayloadOn = String(tempCtrlPayloadOnParam->getValue());
+    paramsCfg.tempCtrlPayloadOff = String(tempCtrlPayloadOffParam->getValue());
+    paramsCfg.tempCtrlThresholdOn = String(tempCtrlThresholdOnParam->getValue()).toFloat();
+    paramsCfg.tempCtrlThresholdOff = String(tempCtrlThresholdOffParam->getValue()).toFloat();
 
     _updateInverterTypeSelect();
 }
@@ -371,6 +444,16 @@ void WifiAndConfigManager::show() {
 
     GLOG::print(F("-> Inverter type: "));
     GLOG::println(paramsCfg.inverterType);
+
+    GLOG::print(F("-> TempCtrl on   : "));
+    GLOG::println(paramsCfg.tempCtrlEnabled ? F("yes") : F("no"));
+    GLOG::print(F("-> TempCtrl topic: "));
+    GLOG::println(paramsCfg.tempCtrlTopic);
+    GLOG::print(F("-> TempCtrl on>= : "));
+    GLOG::println(String(paramsCfg.tempCtrlThresholdOn, 1));
+    GLOG::print(F("-> TempCtrl off< : "));
+    GLOG::println(String(paramsCfg.tempCtrlThresholdOff, 1));
+
     GLOG::println(F("---------------------------"));
 }
 
@@ -408,6 +491,30 @@ int WifiAndConfigManager::getModbusPollingInSeconds() {
 
 String WifiAndConfigManager::getInverterType() {
     return paramsCfg.inverterType;
+}
+
+bool WifiAndConfigManager::getTempCtrlEnabled() {
+    return paramsCfg.tempCtrlEnabled;
+}
+
+String WifiAndConfigManager::getTempCtrlTopic() {
+    return paramsCfg.tempCtrlTopic;
+}
+
+String WifiAndConfigManager::getTempCtrlPayloadOn() {
+    return paramsCfg.tempCtrlPayloadOn;
+}
+
+String WifiAndConfigManager::getTempCtrlPayloadOff() {
+    return paramsCfg.tempCtrlPayloadOff;
+}
+
+float WifiAndConfigManager::getTempCtrlThresholdOn() {
+    return paramsCfg.tempCtrlThresholdOn;
+}
+
+float WifiAndConfigManager::getTempCtrlThresholdOff() {
+    return paramsCfg.tempCtrlThresholdOff;
 }
 
 WiFiManager & WifiAndConfigManager::getWM() {

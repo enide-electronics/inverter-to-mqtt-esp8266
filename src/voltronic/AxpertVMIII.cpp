@@ -14,7 +14,7 @@
 VoltronicAxpertVMIIIInverter::VoltronicAxpertVMIIIInverter(Stream *serial, bool shouldDeleteSerial) 
     : VoltronicInverter(serial, shouldDeleteSerial) {
     state = 0;
-        
+    tempHeatsink = NAN;
 }
 
 VoltronicAxpertVMIIIInverter::~VoltronicAxpertVMIIIInverter() {
@@ -68,6 +68,10 @@ std::list<String> VoltronicAxpertVMIIIInverter::getTopicsToSubscribe() {
     std::list<String> topics;
     // add topic in the future if we want to remotely control the inverter
     return topics;
+}
+
+float VoltronicAxpertVMIIIInverter::getMaxTemperature() {
+    return this->tempHeatsink;
 }
 
 
@@ -170,6 +174,7 @@ void VoltronicAxpertVMIIIInverter::readGeneralStatus() {
             inverterData.set("PloadVA", load_va);
             inverterData.set("Vbus", voltage_bus);
             inverterData.set("TempHeatsink", temp_heatsink);
+            this->tempHeatsink = (float) temp_heatsink;
             inverterData.set("BatteryCapacity", batt_capacity);
             inverterData.set("Vbat", voltage_batt);
             inverterData.set("IbatCharge", batt_charge_current);

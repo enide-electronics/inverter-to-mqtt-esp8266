@@ -30,6 +30,7 @@ class SoyosourceGTNInverter : public Inverter {
         virtual InverterData getData(bool fullSet = false);
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
+        virtual float getMaxTemperature();
     private:
         Stream *serial;
         bool shouldDeleteSerial;
@@ -41,6 +42,7 @@ class SoyosourceGTNInverter : public Inverter {
         uint32_t unknownFrameCounter;
         
         bool isValid;
+        float temperature;
         InverterData inverterData;
 
         bool parseSoyosourceDisplayByte(uint8_t byte);

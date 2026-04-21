@@ -50,6 +50,13 @@ void MqttPublisher::publishOnline() {
     client->publish(LWT_TOPIC, "true", true);
 }
 
+bool MqttPublisher::publishFanCmdMsg(const char *absoluteTopic, const char *payload) {
+    if (!client->connected()) {
+        return false;
+    }
+    return client->publish(absoluteTopic, payload);
+}
+
 void MqttPublisher::setClientId(String &clientId) {
     this->clientId = clientId;
 }

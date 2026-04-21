@@ -52,3 +52,8 @@ void TestInverter::setIncomingTopicData(const String &topic, const String &value
 std::list<String> TestInverter::getTopicsToSubscribe() {
     return std::list<String>();
 }
+
+float TestInverter::getMaxTemperature() {
+    // Simulate a plausible inverter temperature between 25 .. 75 degC
+    return random(250, 750) / 10.0f;
+}

@@ -27,7 +27,16 @@ class WiCMParamConfig {
         std::vector<int> modbusAddresses;
         int modbusPollingInSeconds;
         String inverterType;
-        
+
+        // Temperature controller - publishes ON/OFF to another device's MQTT topic
+        // based on the maximum inverter temperature, evaluated every minute.
+        bool tempCtrlEnabled;
+        String tempCtrlTopic;
+        String tempCtrlPayloadOn;
+        String tempCtrlPayloadOff;
+        float tempCtrlThresholdOn;
+        float tempCtrlThresholdOff;
+
         WiCMParamConfig();
         virtual ~WiCMParamConfig();
 

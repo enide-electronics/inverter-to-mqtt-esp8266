@@ -23,9 +23,11 @@ class VoltronicAxpertVMIIIInverter : public VoltronicInverter {
 
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
+        virtual float getMaxTemperature();
 
     private:
         int state;
+        float tempHeatsink;
         
         virtual void readRatedInformation(); // QPIRI
         virtual void readGeneralStatus();    // QPIGS

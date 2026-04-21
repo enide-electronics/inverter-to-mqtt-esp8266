@@ -36,7 +36,18 @@ class WifiAndConfigManager {
         char inverterModelCustomFieldBufferStr[_IMCFBS_SIZE];
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
-        
+
+        // Temperature controller params
+        WiFiManagerParameter *tempCtrlSectionHeaderParam;
+        WiFiManagerParameter *tempCtrlEnabledCustomParam;
+        WiFiManagerParameter *tempCtrlEnabledHidden;
+        WiFiManagerParameter *tempCtrlTopicParam;
+        WiFiManagerParameter *tempCtrlPayloadOnParam;
+        WiFiManagerParameter *tempCtrlPayloadOffParam;
+        WiFiManagerParameter *tempCtrlThresholdOnParam;
+        WiFiManagerParameter *tempCtrlThresholdOffParam;
+        char tempCtrlEnabledBuffer[512];
+
         // setup vars
         WiCMParamConfig paramsCfg;
 
@@ -72,6 +83,13 @@ class WifiAndConfigManager {
         std::vector<int> getModbusAddresses();
         int getModbusPollingInSeconds();
         String getInverterType();
+
+        bool getTempCtrlEnabled();
+        String getTempCtrlTopic();
+        String getTempCtrlPayloadOn();
+        String getTempCtrlPayloadOff();
+        float getTempCtrlThresholdOn();
+        float getTempCtrlThresholdOff();
 
         WiFiManager & getWM();
         void loop();

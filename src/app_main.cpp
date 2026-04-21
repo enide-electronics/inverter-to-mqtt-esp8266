@@ -32,6 +32,7 @@
 #include "InverterFactory.h"
 #include "MqttPublisher.h"
 #include "InverterData.h"
+#include "TemperatureController.h"
 #include "GLog.h"
 
 /*
@@ -64,7 +65,21 @@ uint8_t tasksRedLedCounter = 0;
 
 Inverter *inverter = NULL;
 MqttPublisher *mqtt = NULL;
+TemperatureController *tempCtrl = NULL;
 WifiAndConfigManager wcm;
+
+void setupTemperatureController() {
+    tempCtrl = new TemperatureController(
+        inverter,
+        mqtt,
+        wcm.getTempCtrlEnabled(),
+        wcm.getTempCtrlTopic(),
+        wcm.getTempCtrlPayloadOn(),
+        wcm.getTempCtrlPayloadOff(),
+        wcm.getTempCtrlThresholdOn(),
+        wcm.getTempCtrlThresholdOff()
+    );
+}
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
     GLOG::logMqtt(topic, payload, length);
@@ -127,6 +142,7 @@ void applyNewConfiguration() {
     GLOG::println(F("LOOP: New config, deleting objects"));
     
     // delete old objects
+    delete tempCtrl;
     delete mqtt;
     delete inverter;
     espClient.stop();
@@ -138,6 +154,8 @@ void applyNewConfiguration() {
     auto topics = inverter->getTopicsToSubscribe();
     setupMqtt(topics);
     areRemoteCommandsSupported = topics.size() > 0;
+
+    setupTemperatureController();
 }
 
 bool isFactoryResetRequested() {
@@ -165,6 +183,8 @@ void setup() {
     auto topics = inverter->getTopicsToSubscribe();
     setupMqtt(topics);
     areRemoteCommandsSupported = topics.size() > 0;
+
+    setupTemperatureController();
 }
 
 void loop() {
@@ -190,6 +210,7 @@ void loop() {
     
     mqtt->loop();
     inverter->loop();
+    tempCtrl->loop();
 
     unsigned long now = millis();
 
