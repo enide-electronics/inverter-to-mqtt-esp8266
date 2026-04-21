@@ -188,12 +188,7 @@ bool GrowattPriorityTask::readPriorityStatus() {
     uint8_t result = this->node->readHoldingRegisters(1070, 49); // [1070..1118]
     
     if (result == this->node->ku8MBSuccess) {
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-        DynamicJsonDocument json(640);
-#else
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& json = jsonBuffer.createObject();
-#endif
+        JsonDocument json;
         // grid
         json["grid"]["pr"]   = node->getResponseBuffer(0); // 1070
         json["grid"]["ssoc"] = node->getResponseBuffer(1); // 1071
@@ -226,11 +221,7 @@ bool GrowattPriorityTask::readPriorityStatus() {
         json["load"]["t3_enable"] = toEnableString(node->getResponseBuffer(48));                                // 1118
 
         String jsonResponse;
-#if ARDUINOJSON_VERSION_MAJOR >= 6
         serializeJson(json, jsonResponse);
-#else
-        json.printTo(jsonResponse);
-#endif
         GLOG::println(String(" ok, json=") + jsonResponse);
         response().set((String(F(TOPIC_SETTINGS_PRIORITY)) + F("/data")).c_str(), jsonResponse); // setting as string
         return true;

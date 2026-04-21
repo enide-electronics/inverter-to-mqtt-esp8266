@@ -74,44 +74,35 @@ void WiCMParamConfig::save() {
 
     GLOG::println(F("WiCM: Saving config file"));
 
-    #if ARDUINOJSON_VERSION_MAJOR >= 6
-        DynamicJsonDocument json(1024);
-    #else
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& json = jsonBuffer.createObject();
-    #endif
+    JsonDocument json;
 
-        json[DEVICE_NAME_K] = deviceName.c_str();
-        json[SOFTAP_PASSWORD_K] = softApPassword.c_str();
-        json[MQTT_SERVER_K] = mqttServer.c_str();
-        json[MQTT_PORT_K] = mqttPort;
-        mqttUsername.trim();
-        json[MQTT_USERNAME_K] = mqttUsername.c_str();
-        mqttPassword.trim();
-        json[MQTT_PASSWORD_K] = mqttPassword.c_str();
-        json[MQTT_TOPIC_K] = mqttBaseTopic.c_str();
-        json[MODBUS_ADDRS_K] = modbusAddresses;
-        json[MODBUS_POLLING_K] = modbusPollingInSeconds;
-        json[INVERTER_MODEL_K] = inverterType.c_str();
-        json[TEMP_CTRL_ENABLED_K] = tempCtrlEnabled;
-        tempCtrlTopic.trim();
-        json[TEMP_CTRL_TOPIC_K] = tempCtrlTopic.c_str();
-        json[TEMP_CTRL_ON_K] = tempCtrlPayloadOn.c_str();
-        json[TEMP_CTRL_OFF_K] = tempCtrlPayloadOff.c_str();
-        json[TEMP_CTRL_TH_ON_K] = tempCtrlThresholdOn;
-        json[TEMP_CTRL_TH_OFF_K] = tempCtrlThresholdOff;
+    json[DEVICE_NAME_K] = deviceName.c_str();
+    json[SOFTAP_PASSWORD_K] = softApPassword.c_str();
+    json[MQTT_SERVER_K] = mqttServer.c_str();
+    json[MQTT_PORT_K] = mqttPort;
+    mqttUsername.trim();
+    json[MQTT_USERNAME_K] = mqttUsername.c_str();
+    mqttPassword.trim();
+    json[MQTT_PASSWORD_K] = mqttPassword.c_str();
+    json[MQTT_TOPIC_K] = mqttBaseTopic.c_str();
+    json[MODBUS_ADDRS_K] = modbusAddresses;
+    json[MODBUS_POLLING_K] = modbusPollingInSeconds;
+    json[INVERTER_MODEL_K] = inverterType.c_str();
+    json[TEMP_CTRL_ENABLED_K] = tempCtrlEnabled;
+    tempCtrlTopic.trim();
+    json[TEMP_CTRL_TOPIC_K] = tempCtrlTopic.c_str();
+    json[TEMP_CTRL_ON_K] = tempCtrlPayloadOn.c_str();
+    json[TEMP_CTRL_OFF_K] = tempCtrlPayloadOff.c_str();
+    json[TEMP_CTRL_TH_ON_K] = tempCtrlThresholdOn;
+    json[TEMP_CTRL_TH_OFF_K] = tempCtrlThresholdOff;
 
-        File configFile = SPIFFS.open(F(PARAMS_FILE), "w");
-        if (!configFile) {
-            GLOG::println(F("WiCM: Save failed"));
-        }
+    File configFile = SPIFFS.open(F(PARAMS_FILE), "w");
+    if (!configFile) {
+        GLOG::println(F("WiCM: Save failed"));
+    }
 
-    #if ARDUINOJSON_VERSION_MAJOR >= 6
-        serializeJson(json, configFile);
-    #else
-        json.printTo(configFile);
-    #endif
-        configFile.close();
+    serializeJson(json, configFile);
+    configFile.close();
 
     //end save
 }
@@ -129,17 +120,10 @@ void WiCMParamConfig::load() {
             std::unique_ptr<char[]> buf(new char[size]);
             configFile.readBytes(buf.get(), size);
 
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-            DynamicJsonDocument json(1024);
+            JsonDocument json;
             auto deserializeError = deserializeJson(json, buf.get());
-            
+
             if ( ! deserializeError ) {
-#else
-            DynamicJsonBuffer jsonBuffer;
-            JsonObject& json = jsonBuffer.parseObject(buf.get());
-            
-            if (json.success()) {
-#endif
                 GLOG::println(F("WiCM: config json parsed"));
 #ifdef SHOW_JSON_FILE
                 String jsonStringified;
@@ -147,49 +131,15 @@ void WiCMParamConfig::load() {
                 GLOG::println(String(F("WiCM: ")) + jsonStringified);
 #endif
 
-                if (json.containsKey(DEVICE_NAME_K)) {
-                    deviceName = json[DEVICE_NAME_K].as<String>();
-                } else {
-                    deviceName = DEFAULT_DEVICE_NAME;
-                }
-                
-                if (json.containsKey(SOFTAP_PASSWORD_K)) {
-                    softApPassword = json[SOFTAP_PASSWORD_K].as<String>();
-                } else {
-                    softApPassword = DEFAULT_SOFTAP_PASSWORD;
-                }
-                
-                if (json.containsKey(MQTT_SERVER_K)) {
-                    mqttServer = json[MQTT_SERVER_K].as<String>();
-                } else {
-                    mqttServer = "";
-                }
+                deviceName = json[DEVICE_NAME_K] | DEFAULT_DEVICE_NAME;
+                softApPassword = json[SOFTAP_PASSWORD_K] | DEFAULT_SOFTAP_PASSWORD;
+                mqttServer = json[MQTT_SERVER_K] | "";
+                mqttPort = json[MQTT_PORT_K] | 1883;
+                mqttBaseTopic = json[MQTT_TOPIC_K] | DEFAULT_TOPIC;
+                mqttUsername = json[MQTT_USERNAME_K] | "";
+                mqttPassword = json[MQTT_PASSWORD_K] | "";
 
-                if (json.containsKey(MQTT_PORT_K)) {
-                    mqttPort = json[MQTT_PORT_K];
-                } else {
-                    mqttPort = 1883;
-                }
-
-                if (json.containsKey(MQTT_TOPIC_K)) {
-                    mqttBaseTopic = json[MQTT_TOPIC_K].as<String>();
-                } else {
-                    mqttBaseTopic = DEFAULT_TOPIC;
-                }
-                
-                if (json.containsKey(MQTT_USERNAME_K)) {
-                    mqttUsername = json[MQTT_USERNAME_K].as<String>();
-                } else {
-                    mqttUsername = "";
-                }
-                
-                if (json.containsKey(MQTT_PASSWORD_K)) {
-                    mqttPassword = json[MQTT_PASSWORD_K].as<String>();
-                } else {
-                    mqttPassword = "";
-                }
-
-                if (json.containsKey(MODBUS_ADDRS_K)) {
+                if (json[MODBUS_ADDRS_K].is<JsonArrayConst>()) {
                     modbusAddresses.clear();
                     for (int i : json[MODBUS_ADDRS_K].as<JsonArrayConst>()) {
                         modbusAddresses.push_back(i);
@@ -197,57 +147,20 @@ void WiCMParamConfig::load() {
                 } else {
                     modbusAddresses = {1};
                 }
-                
-                if (json.containsKey(MODBUS_POLLING_K)) {
-                    modbusPollingInSeconds = json[MODBUS_POLLING_K];
-                } else {
-                    modbusPollingInSeconds = 5;
-                }
 
-                if (json.containsKey(INVERTER_MODEL_K)) {
-                    inverterType = json[INVERTER_MODEL_K].as<String>();
-                    if (inverterType == "") {
-                        inverterType = "none";
-                    }
-                } else {
+                modbusPollingInSeconds = json[MODBUS_POLLING_K] | 5;
+
+                inverterType = json[INVERTER_MODEL_K] | "none";
+                if (inverterType == "") {
                     inverterType = "none";
                 }
 
-                if (json.containsKey(TEMP_CTRL_ENABLED_K)) {
-                    tempCtrlEnabled = json[TEMP_CTRL_ENABLED_K].as<bool>();
-                } else {
-                    tempCtrlEnabled = false;
-                }
-
-                if (json.containsKey(TEMP_CTRL_TOPIC_K)) {
-                    tempCtrlTopic = json[TEMP_CTRL_TOPIC_K].as<String>();
-                } else {
-                    tempCtrlTopic = "";
-                }
-
-                if (json.containsKey(TEMP_CTRL_ON_K)) {
-                    tempCtrlPayloadOn = json[TEMP_CTRL_ON_K].as<String>();
-                } else {
-                    tempCtrlPayloadOn = "ON";
-                }
-
-                if (json.containsKey(TEMP_CTRL_OFF_K)) {
-                    tempCtrlPayloadOff = json[TEMP_CTRL_OFF_K].as<String>();
-                } else {
-                    tempCtrlPayloadOff = "OFF";
-                }
-
-                if (json.containsKey(TEMP_CTRL_TH_ON_K)) {
-                    tempCtrlThresholdOn = json[TEMP_CTRL_TH_ON_K].as<float>();
-                } else {
-                    tempCtrlThresholdOn = 40.0f;
-                }
-
-                if (json.containsKey(TEMP_CTRL_TH_OFF_K)) {
-                    tempCtrlThresholdOff = json[TEMP_CTRL_TH_OFF_K].as<float>();
-                } else {
-                    tempCtrlThresholdOff = 35.0f;
-                }
+                tempCtrlEnabled = json[TEMP_CTRL_ENABLED_K] | false;
+                tempCtrlTopic = json[TEMP_CTRL_TOPIC_K] | "";
+                tempCtrlPayloadOn = json[TEMP_CTRL_ON_K] | "ON";
+                tempCtrlPayloadOff = json[TEMP_CTRL_OFF_K] | "OFF";
+                tempCtrlThresholdOn = json[TEMP_CTRL_TH_ON_K] | 40.0f;
+                tempCtrlThresholdOff = json[TEMP_CTRL_TH_OFF_K] | 35.0f;
             } else {
                 GLOG::println(F("WiCM: config file parse error"));
             }
@@ -283,17 +196,10 @@ void WiCMWifiConfig::load() {
             std::unique_ptr<char[]> buf(new char[size]);
             networkFile.readBytes(buf.get(), size);
 
-#if ARDUINOJSON_VERSION_MAJOR >= 6
-            DynamicJsonDocument json(1024);
+            JsonDocument json;
             auto deserializeError = deserializeJson(json, buf.get());
-            
+
             if ( ! deserializeError ) {
-#else
-            DynamicJsonBuffer jsonBuffer;
-            JsonObject& json = jsonBuffer.parseObject(buf.get());
-            
-            if (json.success()) {
-#endif
                 GLOG::println(F("WiCM: wifi json parsed"));
 #ifdef SHOW_JSON_FILE
                 String jsonStringified;
@@ -301,30 +207,30 @@ void WiCMWifiConfig::load() {
                 GLOG::println(String(F("WiCM: ")) + jsonStringified);
 #endif
 
-                if (json.containsKey(IP_K)) {
+                if (json[IP_K].is<const char*>()) {
                     ip.fromString(json[IP_K].as<String>());
                 } else {
                     ip = IPAddress();
                 }
-                
-                if (json.containsKey(GW_K)) {
+
+                if (json[GW_K].is<const char*>()) {
                     gw.fromString(json[GW_K].as<String>());
                 } else {
                     gw = IPAddress();
                 }
 
-                if (json.containsKey(SN_K)) {
+                if (json[SN_K].is<const char*>()) {
                     sn.fromString(json[SN_K].as<String>());
                 } else {
                     sn = IPAddress();
                 }
-                
-                if (json.containsKey(DNS_K)) {
+
+                if (json[DNS_K].is<const char*>()) {
                     dns.fromString(json[DNS_K].as<String>());
                 } else {
                     dns = IPAddress();
                 }
-                
+
             } else {
                 GLOG::println(F("WiCM: wifi json parse error"));
             }
@@ -339,35 +245,26 @@ void WiCMWifiConfig::load() {
 void WiCMWifiConfig::save() const {
     GLOG::println(F("WiCM: save wifi file"));
 
-    #if ARDUINOJSON_VERSION_MAJOR >= 6
-        DynamicJsonDocument json(1024);
-    #else
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& json = jsonBuffer.createObject();
-    #endif
-        if (ip.isSet()) {
-            json[IP_K] = ip.toString();
-        }
-        if (gw.isSet()) {
-            json[GW_K] = gw.toString();
-        }
-        if (sn.isSet()) {
-            json[SN_K] = sn.toString();
-        }
-        if (dns.isSet()) {
-            json[DNS_K] = dns.toString();
-        }
+    JsonDocument json;
+    if (ip.isSet()) {
+        json[IP_K] = ip.toString();
+    }
+    if (gw.isSet()) {
+        json[GW_K] = gw.toString();
+    }
+    if (sn.isSet()) {
+        json[SN_K] = sn.toString();
+    }
+    if (dns.isSet()) {
+        json[DNS_K] = dns.toString();
+    }
 
-        File networkFile = SPIFFS.open(F(STA_WIFI_PARAMS_FILE), "w");
-        if (!networkFile) {
-            GLOG::println(F("WiCM: save wifi file failed"));
-        }
+    File networkFile = SPIFFS.open(F(STA_WIFI_PARAMS_FILE), "w");
+    if (!networkFile) {
+        GLOG::println(F("WiCM: save wifi file failed"));
+    }
 
-    #if ARDUINOJSON_VERSION_MAJOR >= 6
-        serializeJson(json, networkFile);
-    #else
-        json.printTo(networkFile);
-    #endif
+    serializeJson(json, networkFile);
     networkFile.close();
     GLOG::println(F("WiCM: save wifi OK"));
 }

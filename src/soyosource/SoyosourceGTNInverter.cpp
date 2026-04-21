@@ -18,6 +18,7 @@
 #include "SoyosourceGTNInverter.h"
 #include "../GLog.h"
 #include "../GlobalDefs.h"
+#include <string>
 
 #define SOF_REQUEST 0x55
 #define DISPLAY_PROTOCOL 0
