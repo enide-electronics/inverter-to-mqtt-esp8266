@@ -10,7 +10,12 @@
 #include "GLog.h"
 #include <math.h>
 
-#define TEMP_CTRL_INTERVAL_MS (60UL * 1000UL)
+// How often we re-read the inverter temperature and re-evaluate the desired
+// state. Kept short so threshold crossings are reacted upon quickly.
+#define TEMP_CTRL_EVAL_INTERVAL_MS   (5UL * 1000UL)
+// How often we republish the current state even when it has not changed, so
+// the broker always has a recent value (heartbeat).
+#define TEMP_CTRL_HEARTBEAT_INTERVAL_MS (60UL * 1000UL)
 
 TemperatureController::TemperatureController(Inverter *inverter,
                                              MqttPublisher *mqtt,
@@ -37,6 +42,7 @@ TemperatureController::TemperatureController(Inverter *inverter,
     // Schedule the first evaluation for one interval from now, to give the
     // inverter a chance to produce at least one valid reading.
     this->lastEvaluationAtMillis = millis();
+    this->lastPublishAtMillis = 0;
 
     GLOG::printf("TCTRL: created enabled=%d topic=[%s] on=[%s] off=[%s] thOn=%.1f thOff=%.1f\n",
                  this->enabled ? 1 : 0, this->topic.c_str(), this->payloadOn.c_str(),
@@ -62,15 +68,20 @@ void TemperatureController::loop() {
     }
 
     unsigned long now = millis();
-    if (now - this->lastEvaluationAtMillis < TEMP_CTRL_INTERVAL_MS) {
+    if (now - this->lastEvaluationAtMillis < TEMP_CTRL_EVAL_INTERVAL_MS) {
         return;
     }
     this->lastEvaluationAtMillis = now;
 
-    this->evaluate();
+    // Force a heartbeat publish if enough time has passed since the last
+    // successful publish (or if we have never published at all).
+    bool forceHeartbeat = (!this->stateInitialized) ||
+                          (now - this->lastPublishAtMillis >= TEMP_CTRL_HEARTBEAT_INTERVAL_MS);
+
+    this->evaluate(forceHeartbeat);
 }
 
-void TemperatureController::evaluate() {
+void TemperatureController::evaluate(bool forceHeartbeat) {
     float temperature = this->inverter->getMaxTemperature();
     if (isnan(temperature)) {
         GLOG::println(F("TCTRL: no valid temperature reading, skipping"));
@@ -87,8 +98,8 @@ void TemperatureController::evaluate() {
     }
     // else: keep the current state (hysteresis band)
 
-    // Publish either the first time we run or whenever the state changes.
-    bool needsPublish = (!this->stateInitialized) || (newDeviceOn != previousDeviceOn);
+    bool stateChanged = (newDeviceOn != previousDeviceOn);
+    bool needsPublish = stateChanged || forceHeartbeat || !this->stateInitialized;
 
     this->deviceOn = newDeviceOn;
 
@@ -107,8 +118,10 @@ void TemperatureController::evaluate() {
     bool ok = this->mqtt->publishFanCmdMsg(this->topic.c_str(), payload.c_str());
     if (ok) {
         this->stateInitialized = true;
-        GLOG::printf("TCTRL: temp=%.1f published %s to [%s]\n",
-                     temperature, payload.c_str(), this->topic.c_str());
+        this->lastPublishAtMillis = millis();
+        const char *reason = stateChanged ? "change" : "heartbeat";
+        GLOG::printf("TCTRL: temp=%.1f published %s to [%s] (%s)\n",
+                     temperature, payload.c_str(), this->topic.c_str(), reason);
     } else {
         GLOG::printf("TCTRL: temp=%.1f publish to [%s] FAILED\n",
                      temperature, this->topic.c_str());

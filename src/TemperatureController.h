@@ -3,10 +3,12 @@
   Controls an external device (e.g. a fan or a relay) via MQTT, based on the
   inverter's reported maximum temperature.
 
-  Every minute the controller reads the inverter temperature; when it crosses
-  the "turn on" threshold it publishes the ON payload, and when it falls below
-  the "turn off" threshold it publishes the OFF payload. Between the two
-  thresholds the current state is kept, providing hysteresis.
+  The controller polls the inverter temperature frequently so it can react
+  immediately when it crosses the "turn on" or "turn off" thresholds, but it
+  only publishes an MQTT message when the desired ON/OFF state changes, to
+  avoid flooding the broker. In addition, once per minute it republishes the
+  current state as a heartbeat so the broker always has a recent value.
+  Between the two thresholds the current state is kept, providing hysteresis.
 
   The instance binds to a specific Inverter + MqttPublisher at construction
   time, so a new controller must be created when either of those is replaced.
@@ -35,7 +37,8 @@ class TemperatureController {
         ~TemperatureController();
 
         // Should be called from the main loop. It internally rate-limits itself
-        // to evaluate the inverter temperature once per minute.
+        // to evaluate the inverter temperature every few seconds and to
+        // heartbeat-publish the current state once per minute.
         void loop();
 
         bool isEnabled() const;
@@ -54,9 +57,12 @@ class TemperatureController {
         bool deviceOn;            // currently known desired state
         bool stateInitialized;    // true after we publish for the first time
         unsigned long lastEvaluationAtMillis;
+        unsigned long lastPublishAtMillis;
 
-        // Evaluate the temperature reading and publish if needed.
-        void evaluate();
+        // Evaluate the temperature reading and publish if needed. When
+        // forceHeartbeat is true the current state is published even if it
+        // has not changed, so the broker gets a periodic refresh.
+        void evaluate(bool forceHeartbeat);
 };
 
 #endif
