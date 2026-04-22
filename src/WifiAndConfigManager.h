@@ -67,6 +67,7 @@ class WifiAndConfigManager {
         void handleEraseAll();
         String getParam(String name);
         void _updateInverterTypeSelect();
+        void _updateTempCtrlCheckbox();
         void _recycleParams();
 
     public:

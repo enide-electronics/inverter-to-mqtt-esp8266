@@ -202,6 +202,13 @@ void WifiAndConfigManager::_updateInverterTypeSelect() {
     inverterModelCustomFieldParam = new WiFiManagerParameter(inverterModelCustomFieldBufferStr);
 }
 
+void WifiAndConfigManager::_updateTempCtrlCheckbox() {
+    snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
+             paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
+    tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
+    tempCtrlEnabledCustomParam = new WiFiManagerParameter(tempCtrlEnabledBuffer);
+}
+
 void WifiAndConfigManager::_recycleParams() {
     if (deviceNameParam != NULL) delete deviceNameParam;
     if (softApPasswordParam != NULL) delete softApPasswordParam;
@@ -253,10 +260,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
 
     // temperature controller params
     tempCtrlSectionHeaderParam = new WiFiManagerParameter(tempCtrlSectionHeaderStr);
-    snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
-             paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
-    tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
-    tempCtrlEnabledCustomParam = new WiFiManagerParameter(tempCtrlEnabledBuffer);
+    _updateTempCtrlCheckbox();
     tempCtrlEnabledHidden = new WiFiManagerParameter("tc_en_hidden", "Temp controller enabled (hidden)", paramsCfg.tempCtrlEnabled ? "1" : "0", 2);
     tempCtrlTopicParam = new WiFiManagerParameter("tc_topic", "Target MQTT topic (absolute, e.g. fan/cmd)", paramsCfg.tempCtrlTopic.c_str(), 96);
     tempCtrlPayloadOnParam = new WiFiManagerParameter("tc_on", "Payload ON", paramsCfg.tempCtrlPayloadOn.c_str(), 24);
@@ -377,6 +381,7 @@ void WifiAndConfigManager::copyFromParamsToVars() {
     paramsCfg.tempCtrlThresholdOff = String(tempCtrlThresholdOffParam->getValue()).toFloat();
 
     _updateInverterTypeSelect();
+    _updateTempCtrlCheckbox();
 }
 
 String WifiAndConfigManager::getParam(String name){
