@@ -28,6 +28,9 @@ class WiCMParamConfig {
         int modbusPollingInSeconds;
         String inverterType;
 
+        // UI appearance: dark mode for the configuration web portal
+        bool darkMode;
+
         // Temperature controller - publishes ON/OFF to another device's MQTT topic
         // based on the maximum inverter temperature, evaluated every minute.
         bool tempCtrlEnabled;

@@ -26,6 +26,7 @@
 #define MODBUS_ADDRS_K "modbus_addrs"
 #define MODBUS_POLLING_K "modbus_poll_secs"
 #define INVERTER_MODEL_K "inverter_model"
+#define DARK_MODE_K "dark_mode"
 #define TEMP_CTRL_ENABLED_K "tc_enabled"
 #define TEMP_CTRL_TOPIC_K "tc_topic"
 #define TEMP_CTRL_ON_K "tc_on"
@@ -61,6 +62,7 @@ WiCMParamConfig::WiCMParamConfig() {
     this->modbusAddresses = {1};
     this->modbusPollingInSeconds = 5;
     this->inverterType = "none";
+    this->darkMode = false;
     this->tempCtrlEnabled = false;
     this->tempCtrlTopic = "";
     this->tempCtrlPayloadOn = "ON";
@@ -89,6 +91,7 @@ void WiCMParamConfig::save() {
     json[MODBUS_ADDRS_K] = modbusAddresses;
     json[MODBUS_POLLING_K] = modbusPollingInSeconds;
     json[INVERTER_MODEL_K] = inverterType.c_str();
+    json[DARK_MODE_K] = darkMode;
     json[TEMP_CTRL_ENABLED_K] = tempCtrlEnabled;
     tempCtrlTopic.trim();
     json[TEMP_CTRL_TOPIC_K] = tempCtrlTopic.c_str();
@@ -155,6 +158,8 @@ void WiCMParamConfig::load() {
                 if (inverterType == "") {
                     inverterType = "none";
                 }
+
+                darkMode = json[DARK_MODE_K] | false;
 
                 tempCtrlEnabled = json[TEMP_CTRL_ENABLED_K] | false;
                 tempCtrlTopic = json[TEMP_CTRL_TOPIC_K] | "";

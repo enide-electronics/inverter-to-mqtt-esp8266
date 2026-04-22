@@ -41,6 +41,13 @@ class WifiAndConfigManager {
         WiFiManagerParameter *inverterTypeCustomHidden;
         int inverterTypeComboboxParamIdx;
 
+        // UI appearance params (dark mode checkbox)
+        WiFiManagerParameter *uiSectionHeaderParam;
+        WiFiManagerParameter *darkModeCustomParam;
+        WiFiManagerParameter *darkModeHidden;
+        char darkModeBuffer[512];
+        int darkModeCheckboxParamIdx;
+
         // Temperature controller params
         WiFiManagerParameter *tempCtrlSectionHeaderParam;
         WiFiManagerParameter *tempCtrlEnabledCustomParam;
@@ -73,6 +80,8 @@ class WifiAndConfigManager {
         String getParam(String name);
         void _updateInverterTypeSelect();
         void _updateTempCtrlCheckbox();
+        void _updateDarkModeCheckbox();
+        void _applyDarkModeHead();
         void _recycleParams();
 
     public:
@@ -89,6 +98,8 @@ class WifiAndConfigManager {
         std::vector<int> getModbusAddresses();
         int getModbusPollingInSeconds();
         String getInverterType();
+
+        bool getDarkMode();
 
         bool getTempCtrlEnabled();
         String getTempCtrlTopic();

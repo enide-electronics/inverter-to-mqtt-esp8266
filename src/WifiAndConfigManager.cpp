@@ -67,6 +67,24 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // do not place in PROGMEM because wm keeps the address of the const char * which then is volatile
   const char selectStyle[] = "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>";
 
+// Dark mode head element: selectStyle + overrides that flip the portal to a
+// dark palette. setCustomHeadElement() only stores the raw pointer, so this
+// must live in RAM (.rodata/.data), not PROGMEM.
+const char darkModeHeadElement[] =
+  "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>"
+  "<style>"
+  "body{background:#1e1e1e;color:#e6e6e6;}"
+  "a,a:visited{color:#64b5f6;}"
+  "input,select,textarea{background:#2a2a2a;color:#e6e6e6;border:1px solid #555;}"
+  "input[type=checkbox]{filter:invert(1) hue-rotate(180deg);}"
+  "button,.btn,input[type=submit],input[type=button]{background:#3a3a3a;color:#e6e6e6;border:1px solid #555;}"
+  "hr{border-color:#444;}"
+  ".msg{background:#2a2a2a;color:#e6e6e6;border-color:#555;}"
+  "h1,h2,h3,h4,h5,h6{color:#e6e6e6;}"
+  "fieldset{border-color:#444;}"
+  "label{color:#e6e6e6;}"
+  "</style>";
+
 // The section-header strings below are passed directly to
 // WiFiManagerParameter(const char*), which stores the raw pointer and later
 // reads it with plain strlen()/memcpy() via String::operator=(const char*).
@@ -74,6 +92,8 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // crashes inside WiFiManager::getParamOut(). Keep them in RAM (.rodata/.data),
 // same as selectStyle above.
 const char networkSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Network setup</h3>)";
+
+const char uiSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Appearance</h3>)";
 
 const char mqttSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">MQTT setup</h3>)";
 
@@ -104,6 +124,21 @@ const char tempCtrlEnabledCustomStr[] PROGMEM = R"(
   </script>
   )";
 
+// Dark mode checkbox: mirrors the temperature controller pattern. A hidden
+// text input ("dm_en_hidden") carries the "0"/"1" value in the form submit,
+// and a no-name checkbox toggles it via JS.
+const char darkModeEnabledCustomStr[] PROGMEM = R"(
+  <label style="display:flex;align-items:center;gap:.5em;margin:.5em 0;">
+    <input type="checkbox" id="dm_en_cb" onchange="document.getElementById('dm_en_hidden').value = this.checked ? '1' : '0'">
+    <span>Enable dark mode</span>
+  </label>
+  <script>
+    document.getElementById('dm_en_cb').checked = (%s == "1");
+    document.querySelector("[for='dm_en_hidden']").hidden = true;
+    document.getElementById('dm_en_hidden').hidden = true;
+  </script>
+  )";
+
 WifiAndConfigManager::WifiAndConfigManager() {
     saveWifiStaticIPRequired = false;
     saveParamsRequired = false;
@@ -125,6 +160,9 @@ WifiAndConfigManager::WifiAndConfigManager() {
     modbusPollingInSecondsParam = NULL;
     inverterModelCustomFieldParam = NULL;
     inverterTypeCustomHidden = NULL;
+    uiSectionHeaderParam = NULL;
+    darkModeCustomParam = NULL;
+    darkModeHidden = NULL;
     tempCtrlSectionHeaderParam = NULL;
     tempCtrlEnabledCustomParam = NULL;
     tempCtrlEnabledHidden = NULL;
@@ -136,6 +174,7 @@ WifiAndConfigManager::WifiAndConfigManager() {
 
     inverterTypeComboboxParamIdx = -1;
     tempCtrlCheckboxParamIdx = -1;
+    darkModeCheckboxParamIdx = -1;
 
     if (!LittleFS.begin()) {
         GLOG::println(("WiCM: FS mount failed"));
@@ -217,16 +256,47 @@ void WifiAndConfigManager::_updateInverterTypeSelect() {
     snprintf(inverterModelCustomFieldBufferStr, _IMCFBS_SIZE - 1, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
     inverterModelCustomFieldBufferStr[_IMCFBS_SIZE - 1] = '\0';
 
+    if (inverterModelCustomFieldParam != NULL) {
+        delete inverterModelCustomFieldParam;
+    }
     inverterModelCustomFieldParam = new WiFiManagerParameter(inverterModelCustomFieldBufferStr);
-    wm.getParameters()[inverterTypeComboboxParamIdx] = inverterModelCustomFieldParam;
+    if (inverterTypeComboboxParamIdx >= 0) {
+        wm.getParameters()[inverterTypeComboboxParamIdx] = inverterModelCustomFieldParam;
+    }
 }
 
 void WifiAndConfigManager::_updateTempCtrlCheckbox() {
     snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
              paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
     tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
+    
+    if (tempCtrlEnabledCustomParam != NULL) {
+        delete tempCtrlEnabledCustomParam;
+    }
     tempCtrlEnabledCustomParam = new WiFiManagerParameter(tempCtrlEnabledBuffer);
-    wm.getParameters()[tempCtrlCheckboxParamIdx] = tempCtrlEnabledCustomParam;
+    if (tempCtrlCheckboxParamIdx >= 0) {
+        wm.getParameters()[tempCtrlCheckboxParamIdx] = tempCtrlEnabledCustomParam;
+    }
+}
+
+void WifiAndConfigManager::_updateDarkModeCheckbox() {
+    snprintf(darkModeBuffer, sizeof(darkModeBuffer), darkModeEnabledCustomStr,
+             paramsCfg.darkMode ? "\"1\"" : "\"0\"");
+    darkModeBuffer[sizeof(darkModeBuffer) - 1] = '\0';
+    
+    if (darkModeCustomParam != NULL) {
+        delete darkModeCustomParam;
+    }
+    darkModeCustomParam = new WiFiManagerParameter(darkModeBuffer);
+    if (darkModeCheckboxParamIdx >= 0) {    
+        wm.getParameters()[darkModeCheckboxParamIdx] = darkModeCustomParam;
+    }
+}
+
+void WifiAndConfigManager::_applyDarkModeHead() {
+    // setCustomHeadElement stores the raw pointer; both strings are in
+    // static storage so they remain valid for the lifetime of the portal.
+    wm.setCustomHeadElement(paramsCfg.darkMode ? darkModeHeadElement : selectStyle);
 }
 
 void WifiAndConfigManager::_recycleParams() {
@@ -244,6 +314,9 @@ void WifiAndConfigManager::_recycleParams() {
     if (modbusPollingInSecondsParam != NULL) delete modbusPollingInSecondsParam;
     if (inverterModelCustomFieldParam != NULL) delete inverterModelCustomFieldParam;
     if (inverterTypeCustomHidden != NULL) delete inverterTypeCustomHidden;
+    if (uiSectionHeaderParam != NULL) delete uiSectionHeaderParam;
+    if (darkModeCustomParam != NULL) delete darkModeCustomParam;
+    if (darkModeHidden != NULL) delete darkModeHidden;
     if (tempCtrlSectionHeaderParam != NULL) delete tempCtrlSectionHeaderParam;
     if (tempCtrlEnabledCustomParam != NULL) delete tempCtrlEnabledCustomParam;
     if (tempCtrlEnabledHidden != NULL) delete tempCtrlEnabledHidden;
@@ -256,11 +329,16 @@ void WifiAndConfigManager::_recycleParams() {
 
 void WifiAndConfigManager::setupWifiAndConfig() {
 
+    // Surface WiFiManager internal logs on Serial. The build also sets
+    // WM_DEBUG_LEVEL=4 (DEV) via platformio.ini build_flags; this call keeps
+    // runtime output enabled even if the flag is ever dropped.
+    wm.setDebugOutput(true, WM_DEBUG_DEV);
+
     wifiCfg.load();
     paramsCfg.load();
     show();
 
-    wm.setCustomHeadElement(selectStyle);
+    _applyDarkModeHead();
 
     _recycleParams();
 
@@ -281,11 +359,19 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     inverterSectionHeaderParam = new WiFiManagerParameter(inverterSectionHeaderStr);
     modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
+    inverterTypeComboboxParamIdx = -1;
     _updateInverterTypeSelect();
     inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
 
+    // UI appearance params (must be created before being assigned inside _updateDarkModeCheckbox)
+    uiSectionHeaderParam = new WiFiManagerParameter(uiSectionHeaderStr);
+    darkModeCheckboxParamIdx = -1;
+    _updateDarkModeCheckbox();
+    darkModeHidden = new WiFiManagerParameter("dm_en_hidden", "Dark mode enabled (hidden)", paramsCfg.darkMode ? "1" : "0", 2);
+
     // temperature controller params
     tempCtrlSectionHeaderParam = new WiFiManagerParameter(tempCtrlSectionHeaderStr);
+    tempCtrlCheckboxParamIdx = -1;
     _updateTempCtrlCheckbox();
     tempCtrlEnabledHidden = new WiFiManagerParameter("tc_en_hidden", "Temp controller enabled (hidden)", paramsCfg.tempCtrlEnabled ? "1" : "0", 2);
     tempCtrlTopicParam = new WiFiManagerParameter("tc_topic", "Target MQTT topic (absolute, e.g. fan/cmd)", paramsCfg.tempCtrlTopic.c_str(), 96);
@@ -324,6 +410,12 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(modbusAddressParam);
     wm.addParameter(modbusPollingInSecondsParam);
 
+    // UI appearance params
+    wm.addParameter(uiSectionHeaderParam);
+    wm.addParameter(darkModeHidden);       // must be registered before the checkbox JS targets it
+    wm.addParameter(darkModeCustomParam);
+    darkModeCheckboxParamIdx = wm.getParametersCount() - 1;
+
     // temperature controller params
     wm.addParameter(tempCtrlSectionHeaderParam);
     wm.addParameter(tempCtrlEnabledHidden);       // must be registered before the checkbox JS targets it
@@ -335,6 +427,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(tempCtrlThresholdOnParam);
     wm.addParameter(tempCtrlThresholdOffParam);
 
+     
     // make static ip fields visible in Wifi menu
     wm.setShowStaticFields(true);
     wm.setShowDnsFields(true);
@@ -402,6 +495,9 @@ void WifiAndConfigManager::copyFromParamsToVars() {
     paramsCfg.modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
     paramsCfg.inverterType = String(inverterTypeCustomHidden->getValue());
 
+    // UI appearance
+    paramsCfg.darkMode = String(darkModeHidden->getValue()) == "1";
+
     // temperature controller values
     paramsCfg.tempCtrlEnabled = String(tempCtrlEnabledHidden->getValue()) == "1";
     paramsCfg.tempCtrlTopic = String(tempCtrlTopicParam->getValue());
@@ -413,6 +509,8 @@ void WifiAndConfigManager::copyFromParamsToVars() {
 
     _updateInverterTypeSelect();
     _updateTempCtrlCheckbox();
+    _updateDarkModeCheckbox();
+    _applyDarkModeHead();
 }
 
 String WifiAndConfigManager::getParam(String name){
@@ -482,6 +580,9 @@ void WifiAndConfigManager::show() {
     GLOG::print(F("-> Inverter type: "));
     GLOG::println(paramsCfg.inverterType);
 
+    GLOG::print(F("-> Dark mode     : "));
+    GLOG::println(paramsCfg.darkMode ? F("yes") : F("no"));
+
     GLOG::print(F("-> TempCtrl on   : "));
     GLOG::println(paramsCfg.tempCtrlEnabled ? F("yes") : F("no"));
     GLOG::print(F("-> TempCtrl topic: "));
@@ -528,6 +629,10 @@ int WifiAndConfigManager::getModbusPollingInSeconds() {
 
 String WifiAndConfigManager::getInverterType() {
     return paramsCfg.inverterType;
+}
+
+bool WifiAndConfigManager::getDarkMode() {
+    return paramsCfg.darkMode;
 }
 
 bool WifiAndConfigManager::getTempCtrlEnabled() {
