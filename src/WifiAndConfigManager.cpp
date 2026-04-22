@@ -110,7 +110,7 @@ const char tempCtrlSectionHeaderStr[] = R"(
   <h3 style="margin-top:1em;">Temperature controller</h3>
   <p style="font-size:0.9em;margin:0 0 .5em 0;">
     Publishes an ON/OFF message to another device based on the inverter
-    temperature (evaluated every minute).
+    temperature (evaluated every few seconds; heartbeat sent once per minute).
   </p>
   )";
 
@@ -259,7 +259,7 @@ void WifiAndConfigManager::doFactoryReset() {
 }
 
 void WifiAndConfigManager::_updateInverterTypeSelect() {
-    snprintf(inverterModelCustomFieldBufferStr, _IMCFBS_SIZE - 1, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
+    snprintf_P(inverterModelCustomFieldBufferStr, _IMCFBS_SIZE - 1, inverterTypeSelectStr, paramsCfg.inverterType.c_str());
     inverterModelCustomFieldBufferStr[_IMCFBS_SIZE - 1] = '\0';
 
     if (inverterModelCustomFieldParam != NULL) {
@@ -272,7 +272,7 @@ void WifiAndConfigManager::_updateInverterTypeSelect() {
 }
 
 void WifiAndConfigManager::_updateTempCtrlCheckbox() {
-    snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
+    snprintf_P(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
              paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
     tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
 
@@ -286,7 +286,7 @@ void WifiAndConfigManager::_updateTempCtrlCheckbox() {
 }
 
 void WifiAndConfigManager::_updateDarkModeCheckbox() {
-    snprintf(darkModeBuffer, sizeof(darkModeBuffer), darkModeEnabledCustomStr,
+    snprintf_P(darkModeBuffer, sizeof(darkModeBuffer), darkModeEnabledCustomStr,
              paramsCfg.darkMode ? "\"1\"" : "\"0\"");
     darkModeBuffer[sizeof(darkModeBuffer) - 1] = '\0';
 

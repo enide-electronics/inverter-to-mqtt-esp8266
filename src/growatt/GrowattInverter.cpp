@@ -437,9 +437,6 @@ std::list<String> GrowattInverter::getTopicsToSubscribe()
 }
 
 float GrowattInverter::getMaxTemperature() {
-    if (!this->valid) {
-        return NAN;
-    }
     float m = this->temp1;
     if (this->temp2 > m) m = this->temp2;
     if (this->temp3 > m) m = this->temp3;

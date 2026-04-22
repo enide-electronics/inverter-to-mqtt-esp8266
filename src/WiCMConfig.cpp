@@ -103,10 +103,11 @@ void WiCMParamConfig::save() {
     File configFile = LittleFS.open(F(PARAMS_FILE), "w");
     if (!configFile) {
         GLOG::println(F("WiCM: Save failed"));
+    } else {
+        serializeJson(json, configFile);
+        configFile.close();    
+        GLOG::println(F("WiCM: save config OK"));
     }
-
-    serializeJson(json, configFile);
-    configFile.close();
 
     //end save
 }
@@ -268,11 +269,11 @@ void WiCMWifiConfig::save() const {
     File networkFile = LittleFS.open(F(STA_WIFI_PARAMS_FILE), "w");
     if (!networkFile) {
         GLOG::println(F("WiCM: save wifi file failed"));
+    } else {
+        serializeJson(json, networkFile);
+        networkFile.close();
+        GLOG::println(F("WiCM: save wifi OK"));
     }
-
-    serializeJson(json, networkFile);
-    networkFile.close();
-    GLOG::println(F("WiCM: save wifi OK"));
 }
 
 void WiCMWifiConfig::erase() {

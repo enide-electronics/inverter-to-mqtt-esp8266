@@ -235,9 +235,6 @@ std::list<String> SoyosourceGTNInverter::getTopicsToSubscribe() {
 }
 
 float SoyosourceGTNInverter::getMaxTemperature() {
-    if (!this->isValid) {
-        return NAN;
-    }
     return this->temperature;
 }
 
