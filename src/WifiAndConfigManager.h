@@ -23,13 +23,16 @@ class WifiAndConfigManager {
         WiFiManager wm;
         
         // Setup params
+        WiFiManagerParameter *networkSectionHeaderParam;
         WiFiManagerParameter *deviceNameParam;
         WiFiManagerParameter *softApPasswordParam;
+        WiFiManagerParameter *mqttSectionHeaderParam;
         WiFiManagerParameter *mqttServerParam;
         WiFiManagerParameter *mqttPortParam;
         WiFiManagerParameter *mqttUsernameParam;
         WiFiManagerParameter *mqttPasswordParam;
         WiFiManagerParameter *mqttBaseTopicParam;
+        WiFiManagerParameter *inverterSectionHeaderParam;
         WiFiManagerParameter *modbusAddressParam;
         WiFiManagerParameter *modbusPollingInSecondsParam;
         

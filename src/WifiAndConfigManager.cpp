@@ -67,7 +67,28 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // do not place in PROGMEM because wm keeps the address of the const char * which then is volatile
   const char selectStyle[] = "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>";
 
-const char tempCtrlSectionHeaderStr[] PROGMEM = R"(
+// The section-header strings below are passed directly to
+// WiFiManagerParameter(const char*), which stores the raw pointer and later
+// reads it with plain strlen()/memcpy() via String::operator=(const char*).
+// Placing them in PROGMEM leads to unaligned IROM reads and LoadStoreError
+// crashes inside WiFiManager::getParamOut(). Keep them in RAM (.rodata/.data),
+// same as selectStyle above.
+const char networkSectionHeaderStr[] = R"(
+  <hr>
+  <h3 style="margin-top:1em;">Network setup</h3>
+  )";
+
+const char mqttSectionHeaderStr[] = R"(
+  <hr>
+  <h3 style="margin-top:1em;">MQTT setup</h3>
+  )";
+
+const char inverterSectionHeaderStr[] = R"(
+  <hr>
+  <h3 style="margin-top:1em;">Inverter setup</h3>
+  )";
+
+const char tempCtrlSectionHeaderStr[] = R"(
   <hr>
   <h3 style="margin-top:1em;">Temperature controller</h3>
   <p style="font-size:0.9em;margin:0 0 .5em 0;">
@@ -99,13 +120,16 @@ WifiAndConfigManager::WifiAndConfigManager() {
     wifiConnected = false;
     
     // config var web params
+    networkSectionHeaderParam = NULL;
     deviceNameParam = NULL;
     softApPasswordParam = NULL;
+    mqttSectionHeaderParam = NULL;
     mqttServerParam = NULL;
     mqttPortParam = NULL;
     mqttUsernameParam = NULL;
     mqttPasswordParam = NULL;
     mqttBaseTopicParam = NULL;
+    inverterSectionHeaderParam = NULL;
     modbusAddressParam = NULL;
     modbusPollingInSecondsParam = NULL;
     inverterModelCustomFieldParam = NULL;
@@ -210,13 +234,16 @@ void WifiAndConfigManager::_updateTempCtrlCheckbox() {
 }
 
 void WifiAndConfigManager::_recycleParams() {
+    if (networkSectionHeaderParam != NULL) delete networkSectionHeaderParam;
     if (deviceNameParam != NULL) delete deviceNameParam;
     if (softApPasswordParam != NULL) delete softApPasswordParam;
+    if (mqttSectionHeaderParam != NULL) delete mqttSectionHeaderParam;
     if (mqttServerParam != NULL) delete mqttServerParam;
     if (mqttPortParam != NULL) delete mqttPortParam;
     if (mqttUsernameParam != NULL) delete mqttUsernameParam;
     if (mqttPasswordParam != NULL) delete mqttPasswordParam;
     if (mqttBaseTopicParam != NULL) delete mqttBaseTopicParam;
+    if (inverterSectionHeaderParam != NULL) delete inverterSectionHeaderParam;
     if (modbusAddressParam != NULL) delete modbusAddressParam;
     if (modbusPollingInSecondsParam != NULL) delete modbusPollingInSecondsParam;
     if (inverterModelCustomFieldParam != NULL) delete inverterModelCustomFieldParam;
@@ -242,10 +269,12 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     _recycleParams();
 
     // device params
+    networkSectionHeaderParam = new WiFiManagerParameter(networkSectionHeaderStr);
     deviceNameParam = new WiFiManagerParameter("devicename", "Device Name", paramsCfg.deviceName.c_str(), 32);
     softApPasswordParam = new WiFiManagerParameter("wifipass", "SoftAP Password", paramsCfg.softApPassword.c_str(), 32);
     
     // MQTT params
+    mqttSectionHeaderParam = new WiFiManagerParameter(mqttSectionHeaderStr);
     mqttServerParam = new WiFiManagerParameter("server", "MQTT server", paramsCfg.mqttServer.c_str(), 40);
     mqttPortParam = new WiFiManagerParameter("port", "MQTT port", String(paramsCfg.mqttPort).c_str(), 6);
     mqttUsernameParam = new WiFiManagerParameter("username", "MQTT username", String(paramsCfg.mqttUsername).c_str(), 32);
@@ -253,6 +282,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     mqttBaseTopicParam = new WiFiManagerParameter("topic", "MQTT base topic", paramsCfg.mqttBaseTopic.c_str(), 24);
     
     // inverter params
+    inverterSectionHeaderParam = new WiFiManagerParameter(inverterSectionHeaderStr);
     modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     _updateInverterTypeSelect();
@@ -278,10 +308,12 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.setMenu(menu);
 
     // add device params
+    wm.addParameter(networkSectionHeaderParam);
     wm.addParameter(deviceNameParam);
     wm.addParameter(softApPasswordParam);
 
     // add MQTT params
+    wm.addParameter(mqttSectionHeaderParam);
     wm.addParameter(mqttServerParam);
     wm.addParameter(mqttPortParam);
     wm.addParameter(mqttUsernameParam);
@@ -289,6 +321,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(mqttBaseTopicParam);
     
     // add inverter params
+    wm.addParameter(inverterSectionHeaderParam);
     wm.addParameter(inverterTypeCustomHidden); // Needs to be added before the javascript that hides it
     wm.addParameter(inverterModelCustomFieldParam);
     wm.addParameter(modbusAddressParam);
