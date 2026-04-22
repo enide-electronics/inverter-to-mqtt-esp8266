@@ -445,3 +445,93 @@ float GrowattInverter::getMaxTemperature() {
     if (this->temp3 > m) m = this->temp3;
     return m;
 }
+
+// Common single-phase sensors for SPH/SPA/MIN XH inverters.
+static const HaSensorDescriptor GROWATT_SENSORS_1P[] = {
+    // name,       friendly,                  unit,  device_class,  state_class,  icon
+    { "status",    "Inverter Status",         NULL,  NULL,          NULL,         "mdi:solar-power" },
+    { "Priority",  "Priority",                NULL,  "enum",        NULL,         "mdi:state-machine" },
+    { "DerateMode","Derate Mode",             NULL,  NULL,          NULL,         NULL },
+    { "Derate",    "Derate Cause",            NULL,  NULL,          NULL,         NULL },
+
+    { "Ppv1",      "PV1 Power",               "W",   "power",       "measurement", NULL },
+    { "Vpv1",      "PV1 Voltage",             "V",   "voltage",     "measurement", NULL },
+    { "Ipv1",      "PV1 Current",             "A",   "current",     "measurement", NULL },
+    { "Ppv2",      "PV2 Power",               "W",   "power",       "measurement", NULL },
+    { "Vpv2",      "PV2 Voltage",             "V",   "voltage",     "measurement", NULL },
+    { "Ipv2",      "PV2 Current",             "A",   "current",     "measurement", NULL },
+
+    { "Vac1",      "Grid Voltage L1",         "V",   "voltage",     "measurement", NULL },
+    { "Iac1",      "Grid Current L1",         "A",   "current",     "measurement", NULL },
+    { "Pac1",      "Grid Apparent Power L1",  "VA",  "apparent_power", "measurement", NULL },
+    { "Pac",       "Grid Active Power",       "W",   "power",       "measurement", NULL },
+    { "Fac",       "Grid Frequency",          "Hz",  "frequency",   "measurement", NULL },
+
+    { "Etoday",    "Energy Today",            "kWh", "energy",      "total_increasing", NULL },
+    { "Etotal",    "Energy Total",            "kWh", "energy",      "total_increasing", NULL },
+    { "Ttotal",    "Total Run Time",          "h",   "duration",    "total_increasing", NULL },
+
+    { "Temp1",     "Inverter Temperature",    "\xC2\xB0""C", "temperature", "measurement", NULL },
+    { "Temp2",     "IPM Temperature",         "\xC2\xB0""C", "temperature", "measurement", NULL },
+    { "Temp3",     "Boost Temperature",       "\xC2\xB0""C", "temperature", "measurement", NULL },
+
+    { "Battery",   "Battery Type",            NULL,  "enum",        NULL,         "mdi:battery" },
+    { "Pdischarge","Battery Discharge Power", "W",   "power",       "measurement", NULL },
+    { "Pcharge",   "Battery Charge Power",    "W",   "power",       "measurement", NULL },
+    { "Vbat",      "Battery Voltage",         "V",   "voltage",     "measurement", NULL },
+    { "SOC",       "Battery State of Charge", "%",   "battery",     "measurement", NULL },
+
+    { "EpsFac",    "EPS Frequency",           "Hz",  "frequency",   "measurement", NULL },
+    { "EpsVac1",   "EPS Voltage L1",          "V",   "voltage",     "measurement", NULL },
+    { "EpsIac1",   "EPS Current L1",          "A",   "current",     "measurement", NULL },
+    { "EpsPac1",   "EPS Apparent Power L1",   "VA",  "apparent_power", "measurement", NULL },
+    { "EpsLoadPercent", "EPS Load",           "%",   NULL,          "measurement", "mdi:percent" },
+    { "EpsPF",     "EPS Power Factor",        NULL,  "power_factor","measurement", NULL },
+};
+
+// Extra sensors enabled only for three-phase (TL) Growatt inverters.
+static const HaSensorDescriptor GROWATT_SENSORS_3P[] = {
+    { "Vac2",      "Grid Voltage L2",         "V",   "voltage",     "measurement", NULL },
+    { "Iac2",      "Grid Current L2",         "A",   "current",     "measurement", NULL },
+    { "Pac2",      "Grid Apparent Power L2",  "VA",  "apparent_power", "measurement", NULL },
+    { "Vac3",      "Grid Voltage L3",         "V",   "voltage",     "measurement", NULL },
+    { "Iac3",      "Grid Current L3",         "A",   "current",     "measurement", NULL },
+    { "Pac3",      "Grid Apparent Power L3",  "VA",  "apparent_power", "measurement", NULL },
+
+    { "EpsVac2",   "EPS Voltage L2",          "V",   "voltage",     "measurement", NULL },
+    { "EpsIac2",   "EPS Current L2",          "A",   "current",     "measurement", NULL },
+    { "EpsPac2",   "EPS Apparent Power L2",   "VA",  "apparent_power", "measurement", NULL },
+    { "EpsVac3",   "EPS Voltage L3",          "V",   "voltage",     "measurement", NULL },
+    { "EpsIac3",   "EPS Current L3",          "A",   "current",     "measurement", NULL },
+    { "EpsPac3",   "EPS Apparent Power L3",   "VA",  "apparent_power", "measurement", NULL },
+};
+
+std::list<HaDiscoveryMessage> GrowattInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
+    std::list<HaDiscoveryMessage> out;
+
+    HaDiscoveryDevice d = device;
+    if (d.model.length() == 0) {
+        d.model = this->enableRemoteCommands
+            ? (this->enableTL ? F("Growatt SPH (TL)") : F("Growatt SPH/SPA"))
+            : (this->enableTL ? F("Growatt MIN XH (TL)") : F("Growatt MIN XH"));
+    }
+    if (d.manufacturer.length() == 0) {
+        d.manufacturer = F("Growatt");
+    }
+
+    // Build a flat array with single-phase sensors and, if applicable, three-phase ones.
+    const size_t count1P = sizeof(GROWATT_SENSORS_1P) / sizeof(GROWATT_SENSORS_1P[0]);
+    const size_t count3P = sizeof(GROWATT_SENSORS_3P) / sizeof(GROWATT_SENSORS_3P[0]);
+    const size_t total = count1P + (this->enableTL ? count3P : 0);
+
+    HaSensorDescriptor *all = new HaSensorDescriptor[total];
+    for (size_t i = 0; i < count1P; i++) all[i] = GROWATT_SENSORS_1P[i];
+    if (this->enableTL) {
+        for (size_t i = 0; i < count3P; i++) all[count1P + i] = GROWATT_SENSORS_3P[i];
+    }
+
+    HaDiscoveryBuilder::appendAll(out, d, all, total);
+    delete[] all;
+
+    return out;
+}

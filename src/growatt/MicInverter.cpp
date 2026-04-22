@@ -173,3 +173,64 @@ float MicInverter::getMaxTemperature() {
     }
     return (this->tempInverter > this->tempIPM) ? this->tempInverter : this->tempIPM;
 }
+
+static const HaSensorDescriptor MIC_SENSORS_1P[] = {
+    // name,       friendly,                  unit,  device_class,     state_class,         icon
+    { "status",    "Inverter Status",         NULL,  NULL,             NULL,                "mdi:solar-power" },
+    { "Ppv",       "PV Total Power",          "W",   "power",          "measurement",       NULL },
+    { "Ppv1",      "PV1 Power",               "W",   "power",          "measurement",       NULL },
+    { "Vpv1",      "PV1 Voltage",             "V",   "voltage",        "measurement",       NULL },
+    { "Ipv1",      "PV1 Current",             "A",   "current",        "measurement",       NULL },
+    { "Ppv2",      "PV2 Power",               "W",   "power",          "measurement",       NULL },
+    { "Vpv2",      "PV2 Voltage",             "V",   "voltage",        "measurement",       NULL },
+    { "Ipv2",      "PV2 Current",             "A",   "current",        "measurement",       NULL },
+
+    { "Vac1",      "Grid Voltage L1",         "V",   "voltage",        "measurement",       NULL },
+    { "Iac1",      "Grid Current L1",         "A",   "current",        "measurement",       NULL },
+    { "Pac1",      "Grid Apparent Power L1",  "VA",  "apparent_power", "measurement",       NULL },
+    { "Pac",       "Grid Active Power",       "W",   "power",          "measurement",       NULL },
+    { "Fac",       "Grid Frequency",          "Hz",  "frequency",      "measurement",       NULL },
+
+    { "Etoday",    "Energy Today",            "kWh", "energy",         "total_increasing",  NULL },
+    { "Etotal",    "Energy Total",            "kWh", "energy",         "total_increasing",  NULL },
+    { "Ttotal",    "Total Run Time",          "h",   "duration",       "total_increasing",  NULL },
+
+    { "Temp1",     "Inverter Temperature",    "\xC2\xB0""C", "temperature", "measurement",  NULL },
+    { "Temp2",     "IPM Temperature",         "\xC2\xB0""C", "temperature", "measurement",  NULL },
+};
+
+static const HaSensorDescriptor MIC_SENSORS_3P[] = {
+    { "Vac2",      "Grid Voltage L2",         "V",   "voltage",        "measurement",       NULL },
+    { "Iac2",      "Grid Current L2",         "A",   "current",        "measurement",       NULL },
+    { "Pac2",      "Grid Apparent Power L2",  "VA",  "apparent_power", "measurement",       NULL },
+    { "Vac3",      "Grid Voltage L3",         "V",   "voltage",        "measurement",       NULL },
+    { "Iac3",      "Grid Current L3",         "A",   "current",        "measurement",       NULL },
+    { "Pac3",      "Grid Apparent Power L3",  "VA",  "apparent_power", "measurement",       NULL },
+};
+
+std::list<HaDiscoveryMessage> MicInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
+    std::list<HaDiscoveryMessage> out;
+
+    HaDiscoveryDevice d = device;
+    if (d.model.length() == 0) {
+        d.model = this->enableTL ? F("Growatt MIC (TL)") : F("Growatt MIC");
+    }
+    if (d.manufacturer.length() == 0) {
+        d.manufacturer = F("Growatt");
+    }
+
+    const size_t count1P = sizeof(MIC_SENSORS_1P) / sizeof(MIC_SENSORS_1P[0]);
+    const size_t count3P = sizeof(MIC_SENSORS_3P) / sizeof(MIC_SENSORS_3P[0]);
+    const size_t total = count1P + (this->enableTL ? count3P : 0);
+
+    HaSensorDescriptor *all = new HaSensorDescriptor[total];
+    for (size_t i = 0; i < count1P; i++) all[i] = MIC_SENSORS_1P[i];
+    if (this->enableTL) {
+        for (size_t i = 0; i < count3P; i++) all[count1P + i] = MIC_SENSORS_3P[i];
+    }
+
+    HaDiscoveryBuilder::appendAll(out, d, all, total);
+    delete[] all;
+
+    return out;
+}

@@ -146,6 +146,34 @@ String MultiGrowattInverter::stripAddrFromTopic(const String & path) {
     return path.substring(pos + 1);
 }
 
+std::list<HaDiscoveryMessage> MultiGrowattInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
+    std::list<HaDiscoveryMessage> out;
+
+    // Iterate over every inverter on the bus and produce its own set of
+    // Home Assistant / Tasmota discovery messages. Each inverter gets:
+    //   - its own base MQTT topic suffixed with the modbus address
+    //   - a synthetic MAC suffixed with the modbus address, so Home
+    //     Assistant treats every inverter as a distinct device
+    //   - a device name suffixed with the modbus address
+    for (auto &entry : this->inverters) {
+        int addr = entry.first;
+        Inverter *inverter = entry.second;
+
+        String addrSuffix = String(addr, 10);
+
+        HaDiscoveryDevice sub = device;
+        sub.baseTopic   = device.baseTopic + "/" + addrSuffix;
+        sub.mac         = device.mac + "_" + addrSuffix;
+        sub.deviceName  = device.deviceName + "-" + addrSuffix;
+        sub.hostname    = device.hostname + "-" + addrSuffix;
+
+        std::list<HaDiscoveryMessage> messages = inverter->getHomeAssistantDiscovery(sub);
+        out.splice(out.end(), messages);
+    }
+
+    return out;
+}
+
 float MultiGrowattInverter::getMaxTemperature() {
     float result = NAN;
     for (const auto & inverterEntry : this->inverters) {

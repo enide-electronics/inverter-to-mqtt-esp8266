@@ -73,20 +73,11 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // Placing them in PROGMEM leads to unaligned IROM reads and LoadStoreError
 // crashes inside WiFiManager::getParamOut(). Keep them in RAM (.rodata/.data),
 // same as selectStyle above.
-const char networkSectionHeaderStr[] = R"(
-  <hr>
-  <h3 style="margin-top:1em;">Network setup</h3>
-  )";
+const char networkSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Network setup</h3>)";
 
-const char mqttSectionHeaderStr[] = R"(
-  <hr>
-  <h3 style="margin-top:1em;">MQTT setup</h3>
-  )";
+const char mqttSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">MQTT setup</h3>)";
 
-const char inverterSectionHeaderStr[] = R"(
-  <hr>
-  <h3 style="margin-top:1em;">Inverter setup</h3>
-  )";
+const char inverterSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Inverter setup</h3>)";
 
 const char tempCtrlSectionHeaderStr[] = R"(
   <hr>
@@ -142,6 +133,9 @@ WifiAndConfigManager::WifiAndConfigManager() {
     tempCtrlPayloadOffParam = NULL;
     tempCtrlThresholdOnParam = NULL;
     tempCtrlThresholdOffParam = NULL;
+
+    inverterTypeComboboxParamIdx = -1;
+    tempCtrlCheckboxParamIdx = -1;
 
     if (!LittleFS.begin()) {
         GLOG::println(("WiCM: FS mount failed"));
@@ -224,6 +218,7 @@ void WifiAndConfigManager::_updateInverterTypeSelect() {
     inverterModelCustomFieldBufferStr[_IMCFBS_SIZE - 1] = '\0';
 
     inverterModelCustomFieldParam = new WiFiManagerParameter(inverterModelCustomFieldBufferStr);
+    wm.getParameters()[inverterTypeComboboxParamIdx] = inverterModelCustomFieldParam;
 }
 
 void WifiAndConfigManager::_updateTempCtrlCheckbox() {
@@ -231,6 +226,7 @@ void WifiAndConfigManager::_updateTempCtrlCheckbox() {
              paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
     tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
     tempCtrlEnabledCustomParam = new WiFiManagerParameter(tempCtrlEnabledBuffer);
+    wm.getParameters()[tempCtrlCheckboxParamIdx] = tempCtrlEnabledCustomParam;
 }
 
 void WifiAndConfigManager::_recycleParams() {
@@ -324,6 +320,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(inverterSectionHeaderParam);
     wm.addParameter(inverterTypeCustomHidden); // Needs to be added before the javascript that hides it
     wm.addParameter(inverterModelCustomFieldParam);
+    inverterTypeComboboxParamIdx = wm.getParametersCount() - 1;
     wm.addParameter(modbusAddressParam);
     wm.addParameter(modbusPollingInSecondsParam);
 
@@ -331,6 +328,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(tempCtrlSectionHeaderParam);
     wm.addParameter(tempCtrlEnabledHidden);       // must be registered before the checkbox JS targets it
     wm.addParameter(tempCtrlEnabledCustomParam);
+    tempCtrlCheckboxParamIdx = wm.getParametersCount() - 1;
     wm.addParameter(tempCtrlTopicParam);
     wm.addParameter(tempCtrlPayloadOnParam);
     wm.addParameter(tempCtrlPayloadOffParam);

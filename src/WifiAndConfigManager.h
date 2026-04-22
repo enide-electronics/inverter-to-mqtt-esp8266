@@ -39,6 +39,7 @@ class WifiAndConfigManager {
         char inverterModelCustomFieldBufferStr[_IMCFBS_SIZE];
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
+        int inverterTypeComboboxParamIdx;
 
         // Temperature controller params
         WiFiManagerParameter *tempCtrlSectionHeaderParam;
@@ -50,6 +51,7 @@ class WifiAndConfigManager {
         WiFiManagerParameter *tempCtrlThresholdOnParam;
         WiFiManagerParameter *tempCtrlThresholdOffParam;
         char tempCtrlEnabledBuffer[512];
+        int tempCtrlCheckboxParamIdx;
 
         // setup vars
         WiCMParamConfig paramsCfg;

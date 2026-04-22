@@ -33,7 +33,12 @@
 #include "MqttPublisher.h"
 #include "InverterData.h"
 #include "TemperatureController.h"
+#include "HaDiscovery.h"
 #include "GLog.h"
+
+#ifndef FIRMWARE_VERSION
+#define FIRMWARE_VERSION "4.0.0"
+#endif
 
 /*
  * You can set the ESP8266 LED working mode by publishing a value to this topic
@@ -131,6 +136,40 @@ void setupMqtt(std::list<String> inverterSettingsTopics) {
     
 }
 
+// Builds the common HaDiscoveryDevice descriptor from the current Wi-Fi /
+// configuration state and asks the inverter for its Home Assistant /
+// Tasmota discovery messages. The returned list is then scheduled on the
+// MQTT publisher so it is sent (as retained messages) on each successful
+// MQTT connection.
+void setupHomeAssistantDiscovery() {
+    if (inverter == NULL || mqtt == NULL) {
+        return;
+    }
+
+    HaDiscoveryDevice device;
+
+    String mac = WiFi.macAddress();
+    mac.replace(":", "");
+    device.mac = mac;
+
+    device.deviceName = wcm.getDeviceName();
+    if (device.deviceName.length() == 0) {
+        device.deviceName = wcm.getMqttTopic();
+    }
+    device.hostname        = WiFi.hostname();
+    device.model           = "";        // filled in by each inverter implementation
+    device.manufacturer    = "";        // filled in by each inverter implementation
+    device.softwareVersion = F(FIRMWARE_VERSION);
+    device.ipAddress       = WiFi.localIP().toString();
+    device.baseTopic       = wcm.getMqttTopic();
+    device.availabilityTopic = wcm.getMqttTopic() + F("/online");
+    device.availabilityOn  = F("true");
+    device.availabilityOff = F("false");
+
+    std::list<HaDiscoveryMessage> messages = inverter->getHomeAssistantDiscovery(device);
+    mqtt->scheduleDiscovery(messages);
+}
+
 void setupLogger() {
     GLOG::setup();
     wcm.getWM().setDebugOutput(GLOG::isLogEnabled());
@@ -155,6 +194,7 @@ void applyNewConfiguration() {
     setupMqtt(topics);
     areRemoteCommandsSupported = topics.size() > 0;
 
+    setupHomeAssistantDiscovery();
     setupTemperatureController();
 }
 
@@ -184,6 +224,7 @@ void setup() {
     setupMqtt(topics);
     areRemoteCommandsSupported = topics.size() > 0;
 
+    setupHomeAssistantDiscovery();
     setupTemperatureController();
 }
 

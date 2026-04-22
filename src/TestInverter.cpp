@@ -60,3 +60,34 @@ std::list<String> TestInverter::getTopicsToSubscribe() {
 float TestInverter::getMaxTemperature() {
     return this->temperature;
 }
+
+static const HaSensorDescriptor TEST_SENSORS[] = {
+    // name,    friendly,                   unit,   device_class,  state_class,   icon
+    { "status", "Status",                   NULL,   NULL,          NULL,          "mdi:test-tube" },
+    { "Ppv1",   "PV1 Power",                "W",    "power",       "measurement", NULL },
+    { "Vpv1",   "PV1 Voltage",              "V",    "voltage",     "measurement", NULL },
+    { "Ipv1",   "PV1 Current",              "A",    "current",     "measurement", NULL },
+    { "Vac1",   "Grid Voltage L1",          "V",    "voltage",     "measurement", NULL },
+    { "Iac1",   "Grid Current L1",          "A",    "current",     "measurement", NULL },
+    { "Pac1",   "Grid Apparent Power L1",   "VA",   "apparent_power", "measurement", NULL },
+    { "Pac",    "Grid Active Power",        "W",    "power",       "measurement", NULL },
+    { "Fac",    "Grid Frequency",           "Hz",   "frequency",   "measurement", NULL },
+    { "Temp",   "Inverter Temperature",     "\xC2\xB0""C", "temperature", "measurement", NULL },
+};
+
+std::list<HaDiscoveryMessage> TestInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
+    std::list<HaDiscoveryMessage> out;
+
+    HaDiscoveryDevice d = device;
+    if (d.model.length() == 0) {
+        d.model = F("Test Inverter");
+    }
+    if (d.manufacturer.length() == 0) {
+        d.manufacturer = F("enide.net");
+    }
+
+    const size_t count = sizeof(TEST_SENSORS) / sizeof(TEST_SENSORS[0]);
+    HaDiscoveryBuilder::appendAll(out, d, TEST_SENSORS, count);
+
+    return out;
+}

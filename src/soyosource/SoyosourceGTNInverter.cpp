@@ -241,6 +241,43 @@ float SoyosourceGTNInverter::getMaxTemperature() {
     return this->temperature;
 }
 
+static const HaSensorDescriptor SOYO_SENSORS[] = {
+    // name,              friendly,                unit,  device_class,  state_class,   icon
+    { "Vac",              "Grid Voltage",          "V",   "voltage",     "measurement", NULL },
+    { "Pac",              "Grid Power",            "W",   "power",       "measurement", NULL },
+    { "PacMeter",         "Meter Power Request",   "W",   "power",       "measurement", NULL },
+    { "Fac",              "Grid Frequency",        "Hz",  "frequency",   "measurement", NULL },
+    { "Vbat",             "DC Input Voltage",      "V",   "voltage",     "measurement", NULL },
+    { "Ibat",             "DC Input Current",      "A",   "current",     "measurement", NULL },
+    { "Pbat",             "DC Input Power",        "W",   "power",       "measurement", NULL },
+    { "Temp",             "Temperature",           "\xC2\xB0""C", "temperature", "measurement", NULL },
+    { "Error",            "Error Bitmask",         NULL,  NULL,          NULL,          "mdi:alert-circle" },
+    { "ErrorBitmask",     "Error Bitmask Masked",  NULL,  NULL,          NULL,          "mdi:alert-circle-outline" },
+    { "ErrorString",      "Error",                 NULL,  NULL,          NULL,          "mdi:alert" },
+    { "Mode",             "Mode Numeric",          NULL,  NULL,          NULL,          NULL },
+    { "ModeString",       "Mode",                  NULL,  NULL,          NULL,          "mdi:state-machine" },
+    { "OperationStatus",  "Operation Status",      NULL,  NULL,          NULL,          NULL },
+    { "OperationStatusId","Operation Status Id",   NULL,  NULL,          NULL,          NULL },
+    { "MeterConnected",   "Meter Connected",       NULL,  NULL,          NULL,          "mdi:connection" },
+};
+
+std::list<HaDiscoveryMessage> SoyosourceGTNInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
+    std::list<HaDiscoveryMessage> out;
+
+    HaDiscoveryDevice d = device;
+    if (d.model.length() == 0) {
+        d.model = F("Soyosource GTN1200");
+    }
+    if (d.manufacturer.length() == 0) {
+        d.manufacturer = F("Soyosource");
+    }
+
+    const size_t count = sizeof(SOYO_SENSORS) / sizeof(SOYO_SENSORS[0]);
+    HaDiscoveryBuilder::appendAll(out, d, SOYO_SENSORS, count);
+
+    return out;
+}
+
 bool SoyosourceGTNInverter::extractDisplayStatusData(const std::vector<uint8_t> &data) {
     auto soyosource_get_16bit = [&](size_t i) -> uint16_t {
         return (uint16_t(data[i + 0]) << 8) | (uint16_t(data[i + 1]) << 0);
