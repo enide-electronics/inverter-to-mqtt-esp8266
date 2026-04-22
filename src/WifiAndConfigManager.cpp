@@ -91,13 +91,19 @@ const char darkModeHeadElement[] =
 // Placing them in PROGMEM leads to unaligned IROM reads and LoadStoreError
 // crashes inside WiFiManager::getParamOut(). Keep them in RAM (.rodata/.data),
 // same as selectStyle above.
-const char networkSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Network setup</h3>)";
+const char networkSectionHeaderStr[] = R"(
+  <hr>
+  <h3 style="margin-top:1em;">Network setup</h3>
+  )";
 
 const char uiSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Appearance</h3>)";
 
 const char mqttSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">MQTT setup</h3>)";
 
-const char inverterSectionHeaderStr[] = R"(<hr><h3 style="margin-top:1em;">Inverter setup</h3>)";
+const char inverterSectionHeaderStr[] = R"(
+  <hr>
+  <h3 style="margin-top:1em;">Inverter setup</h3>
+  )";
 
 const char tempCtrlSectionHeaderStr[] = R"(
   <hr>
@@ -269,7 +275,7 @@ void WifiAndConfigManager::_updateTempCtrlCheckbox() {
     snprintf(tempCtrlEnabledBuffer, sizeof(tempCtrlEnabledBuffer), tempCtrlEnabledCustomStr,
              paramsCfg.tempCtrlEnabled ? "\"1\"" : "\"0\"");
     tempCtrlEnabledBuffer[sizeof(tempCtrlEnabledBuffer) - 1] = '\0';
-    
+
     if (tempCtrlEnabledCustomParam != NULL) {
         delete tempCtrlEnabledCustomParam;
     }
@@ -283,12 +289,12 @@ void WifiAndConfigManager::_updateDarkModeCheckbox() {
     snprintf(darkModeBuffer, sizeof(darkModeBuffer), darkModeEnabledCustomStr,
              paramsCfg.darkMode ? "\"1\"" : "\"0\"");
     darkModeBuffer[sizeof(darkModeBuffer) - 1] = '\0';
-    
+
     if (darkModeCustomParam != NULL) {
         delete darkModeCustomParam;
     }
     darkModeCustomParam = new WiFiManagerParameter(darkModeBuffer);
-    if (darkModeCheckboxParamIdx >= 0) {    
+    if (darkModeCheckboxParamIdx >= 0) {
         wm.getParameters()[darkModeCheckboxParamIdx] = darkModeCustomParam;
     }
 }
@@ -328,11 +334,6 @@ void WifiAndConfigManager::_recycleParams() {
 }
 
 void WifiAndConfigManager::setupWifiAndConfig() {
-
-    // Surface WiFiManager internal logs on Serial. The build also sets
-    // WM_DEBUG_LEVEL=4 (DEV) via platformio.ini build_flags; this call keeps
-    // runtime output enabled even if the flag is ever dropped.
-    wm.setDebugOutput(true, WM_DEBUG_DEV);
 
     wifiCfg.load();
     paramsCfg.load();
@@ -427,7 +428,6 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.addParameter(tempCtrlThresholdOnParam);
     wm.addParameter(tempCtrlThresholdOffParam);
 
-     
     // make static ip fields visible in Wifi menu
     wm.setShowStaticFields(true);
     wm.setShowDnsFields(true);

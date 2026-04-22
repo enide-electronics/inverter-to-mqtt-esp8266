@@ -74,66 +74,6 @@ float VoltronicAxpertVMIIIInverter::getMaxTemperature() {
     return this->tempHeatsink;
 }
 
-static const HaSensorDescriptor AXPERT_SENSORS[] = {
-    // name,                     friendly,                    unit,  device_class,  state_class,   icon
-    { "InverterMode",            "Inverter Mode",             NULL,  NULL,          NULL,          "mdi:state-machine" },
-    { "Warnings",                "Warnings",                  NULL,  NULL,          NULL,          "mdi:alert" },
-
-    { "Vac",                     "Grid Voltage",              "V",   "voltage",     "measurement", NULL },
-    { "Fac",                     "Grid Frequency",            "Hz",  "frequency",   "measurement", NULL },
-    { "VacOut",                  "Output Voltage",            "V",   "voltage",     "measurement", NULL },
-    { "FacOut",                  "Output Frequency",          "Hz",  "frequency",   "measurement", NULL },
-
-    { "Vpv",                     "PV Voltage",                "V",   "voltage",     "measurement", NULL },
-    { "Ipv",                     "PV Current",                "A",   "current",     "measurement", NULL },
-    { "Ppv",                     "PV Power",                  "W",   "power",       "measurement", NULL },
-    { "Epv",                     "PV Energy",                 "kWh", "energy",      "total_increasing", NULL },
-    { "Vscc",                    "SCC Voltage",               "V",   "voltage",     "measurement", NULL },
-
-    { "Pload",                   "Load Active Power",         "W",   "power",       "measurement", NULL },
-    { "PloadVA",                 "Load Apparent Power",       "VA",  "apparent_power", "measurement", NULL },
-    { "Eload",                   "Load Energy",               "kWh", "energy",      "total_increasing", NULL },
-    { "LoadPercent",             "Load",                      "%",   NULL,          "measurement", "mdi:percent" },
-    { "Vbus",                    "Bus Voltage",               "V",   "voltage",     "measurement", NULL },
-    { "TempHeatsink",            "Heatsink Temperature",      "\xC2\xB0""C", "temperature", "measurement", NULL },
-
-    { "Vbat",                    "Battery Voltage",           "V",   "voltage",     "measurement", NULL },
-    { "BatteryCapacity",         "Battery State of Charge",   "%",   "battery",     "measurement", NULL },
-    { "IbatCharge",              "Battery Charge Current",    "A",   "current",     "measurement", NULL },
-    { "IbatDischarge",           "Battery Discharge Current", "A",   "current",     "measurement", NULL },
-
-    { "VbatRecharge",            "Battery Recharge Voltage",  "V",   "voltage",     "measurement", NULL },
-    { "VbatUnderVoltage",        "Battery Under Voltage",     "V",   "voltage",     "measurement", NULL },
-    { "VbatBulkVoltage",         "Battery Bulk Voltage",      "V",   "voltage",     "measurement", NULL },
-    { "VbatFloatVoltage",        "Battery Float Voltage",     "V",   "voltage",     "measurement", NULL },
-    { "VbatRedischargeVoltage",  "Battery Redischarge Voltage","V",  "voltage",     "measurement", NULL },
-    { "ImaxGridChargeCurrent",   "Max Grid Charge Current",   "A",   "current",     "measurement", NULL },
-    { "ImaxChargeCurrent",       "Max Charge Current",        "A",   "current",     "measurement", NULL },
-    { "PrioritySourceOut",       "Output Source Priority",    NULL,  NULL,          NULL,          NULL },
-    { "PrioritySourceCharger",   "Charger Source Priority",   NULL,  NULL,          NULL,          NULL },
-
-    { "LoadStatusON",            "Load Status",               NULL,  NULL,          NULL,          "mdi:power-plug" },
-    { "SCCchargeON",             "SCC Charge",                NULL,  NULL,          NULL,          "mdi:solar-power" },
-    { "ACchargeON",              "AC Charge",                 NULL,  NULL,          NULL,          "mdi:transmission-tower" },
-};
-
-std::list<HaDiscoveryMessage> VoltronicAxpertVMIIIInverter::getHomeAssistantDiscovery(const HaDiscoveryDevice &device) {
-    std::list<HaDiscoveryMessage> out;
-
-    HaDiscoveryDevice d = device;
-    if (d.model.length() == 0) {
-        d.model = F("Voltronic Axpert VM III");
-    }
-    if (d.manufacturer.length() == 0) {
-        d.manufacturer = F("Voltronic Power");
-    }
-
-    const size_t count = sizeof(AXPERT_SENSORS) / sizeof(AXPERT_SENSORS[0]);
-    HaDiscoveryBuilder::appendAll(out, d, AXPERT_SENSORS, count);
-
-    return out;
-}
-
 
 void VoltronicAxpertVMIIIInverter::readRatedInformation() {
     if (sendCommand("QPIRI")) {

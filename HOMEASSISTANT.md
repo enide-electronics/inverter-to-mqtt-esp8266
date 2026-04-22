@@ -4,37 +4,6 @@ If you use [Home Assistant](https://www.home-assistant.io/), here's a preconfigu
 However, all inverter data is sent to a MQTT server of your choosing.
 In no way you are required to run [Home Assistant](https://www.home-assistant.io/) to access it.
 
-## Automatic discovery (Tasmota + Home Assistant)
-Since `v4.0`, the firmware publishes a set of **retained** MQTT messages that Home Assistant can use to automatically discover the inverter and all of its entities. No manual YAML is required to get started. If you prefer to keep your manual YAML, feel free to ignore this feature: the discovery messages are published alongside your existing topics and do not interfere with them.
-
-Two complementary mechanisms are used:
-
-1. **Tasmota device registration protocol (loose)** — on every successful MQTT connection, the firmware publishes
-   - `tasmota/discovery/<MAC>/config` — a JSON document describing the inverter as a device (IP, hostname, model, firmware, LWT topic, etc.). Picked up by the [Home Assistant Tasmota integration](https://www.home-assistant.io/integrations/tasmota/).
-   - `tasmota/discovery/<MAC>/sensors` — a JSON template listing every sensor this inverter publishes, the absolute MQTT topic where each value appears and the associated unit/device_class/state_class. This is a loose interpretation of the protocol (Tasmota normally expects the live `tele/SENSOR` snapshot) and is meant for inspection or third-party integrations that want a single source of truth for the device schema.
-2. **Home Assistant MQTT discovery (per sensor)** — for every data point the inverter publishes, the firmware additionally emits
-   - `homeassistant/sensor/<device>/<sensor>/config` — a standard HA MQTT discovery payload with `state_topic`, `availability_topic`, `unit_of_measurement`, `device_class`, `state_class`, `unique_id` and a `device` block that links the entity back to the Tasmota-registered device through the MAC. HA will create one entity per message, grouped under the same device card.
-
-### Naming and identifiers
-- The device **MAC address** (hex, no colons) is used as the Tasmota device id.
-- The configured **MQTT base topic** (e.g. `growatt`, `gtn1200w`) is used as the base for HA sensor `object_id`s and device name.
-- In **multi-inverter mode**, the firmware iterates over every inverter on the RS485 bus and publishes a full set of discovery messages per inverter:
-  - MAC is suffixed with the modbus address, e.g. `A1B2C3D4E5F6_22`
-  - base MQTT topic is suffixed with the modbus address, e.g. `growatt/22`
-  - device name gets the `-<addr>` suffix so each inverter appears as its own Home Assistant device.
-
-### What to expect in Home Assistant
-After enabling the MQTT integration:
-- A new device with the name of your inverter appears under **Settings → Devices & services → MQTT**.
-- All of the entities listed in the sections below are created automatically, with units, device classes and state classes preset.
-- The device is tied to the LWT topic `<baseTopic>/online`, so HA shows it as `Unavailable` when the ESP8266 is offline.
-
-If you have been using the manual YAML snippets below, you can safely delete them: the auto-discovered entities will have different `object_id`s by default so they will not clash with your existing ones. If you prefer to keep the manual ones and hide the auto-discovered, simply disable the new entities from the Home Assistant UI.
-
-### Disabling auto-discovery
-If, for any reason, you do not want the inverter to publish these retained messages, delete the retained messages on your broker (`tasmota/discovery/#`, `homeassistant/sensor/<device>/#`) and, on the Home Assistant side, remove the auto-created entities. This is typically only needed when migrating from an older setup with manual configuration.
-
-
 ## Growatt live data sensors (all data from input registers)
 These sensors are what you'll need to get the data from the inverter in Home Assistant.
 ```

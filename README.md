@@ -86,16 +86,6 @@ The `Inverter Model` combo box currently includes 5 inverter models:
 The complete list of MQTT topics used by this project is available in the [TOPICS.md](TOPICS.md) file.
 If you use Home Assistant, you can grab the list of preconfigured sensor entities from the [HOMEASSISTANT.md](HOMEASSISTANT.md) file to help you get started.
 
-### Home Assistant auto-discovery
-On every MQTT (re)connection, the firmware publishes a set of **retained discovery messages** that allow Home Assistant to create the inverter device and its entities automatically, with zero manual YAML:
-
-- A Tasmota-style device registration message at `tasmota/discovery/<MAC>/config` plus a companion `tasmota/discovery/<MAC>/sensors` template. This registers the inverter with the [Home Assistant Tasmota integration](https://www.home-assistant.io/integrations/tasmota/).
-- One Home Assistant [MQTT discovery](https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery) message per sensor at `homeassistant/sensor/<device>/<sensor>/config`, each linked back to the Tasmota-registered device by MAC.
-
-In multi-inverter mode, the firmware iterates over every inverter connected to the RS485 bus and publishes a full set of discovery messages **per inverter**, using the modbus address as a suffix so each one shows up as its own device in Home Assistant.
-
-See the [HOMEASSISTANT.md](HOMEASSISTANT.md#automatic-discovery-tasmota-home-assistant) file for details.
-
 ## Hardware
 
 ### Minimum hardware

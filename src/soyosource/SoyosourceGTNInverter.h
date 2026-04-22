@@ -31,7 +31,6 @@ class SoyosourceGTNInverter : public Inverter {
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
         virtual float getMaxTemperature();
-        virtual std::list<HaDiscoveryMessage> getHomeAssistantDiscovery(const HaDiscoveryDevice &device);
     private:
         Stream *serial;
         bool shouldDeleteSerial;
