@@ -26,6 +26,9 @@ class TestInverter : public Inverter
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
         virtual float getMaxTemperature();
+
+    private:
+        float temperature;
 };
 
 #endif
