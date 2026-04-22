@@ -40,6 +40,7 @@ Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code fo
 - Poll multiple Growatt inverters on the same RS485 bus
   - Each inverter should have its own modbus address
   - Enabled in the `WebUI -> Setup -> Inverter modbus address` field by setting a list of addresses, eg: `1,2,4`
+- Optional **temperature-driven MQTT controller** that publishes ON/OFF to a user-defined topic (e.g. to switch an external fan or smart plug on/off) based on the inverter temperature, with configurable thresholds and hysteresis. See [TOPICS.md](TOPICS.md#temperature-controller-topic) for details.
 - Prebuilt binaries, ie no need to recompile the code
 - No cloud, all energy data is under your control
 

@@ -61,6 +61,35 @@ mqtt:
       state_topic: "growatt/Pac1"
       unit_of_measurement: "VA"
       state_class: measurement
+    # Phases 2 and 3 are only published for three-phase (TL) Growatt inverters
+    - name: "Growatt Vac2"
+      state_topic: "growatt/Vac2"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+    - name: "Growatt Iac2"
+      state_topic: "growatt/Iac2"
+      unit_of_measurement: "A"
+      state_class: measurement
+      device_class: current
+    - name: "Growatt Pac2"
+      state_topic: "growatt/Pac2"
+      unit_of_measurement: "VA"
+      state_class: measurement
+    - name: "Growatt Vac3"
+      state_topic: "growatt/Vac3"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+    - name: "Growatt Iac3"
+      state_topic: "growatt/Iac3"
+      unit_of_measurement: "A"
+      state_class: measurement
+      device_class: current
+    - name: "Growatt Pac3"
+      state_topic: "growatt/Pac3"
+      unit_of_measurement: "VA"
+      state_class: measurement
     - name: "Growatt Po"
       state_topic: "growatt/Pac"
       unit_of_measurement: "W"
@@ -81,6 +110,11 @@ mqtt:
       unit_of_measurement: "kWh"
       state_class: total_increasing
       device_class: energy
+    - name: "Growatt Total Run Time"
+      state_topic: "growatt/Ttotal"
+      unit_of_measurement: "h"
+      state_class: total_increasing
+      device_class: duration
     - name: "Growatt Inverter Temp"
       state_topic: "growatt/Temp1"
       unit_of_measurement: "C"
@@ -137,6 +171,37 @@ mqtt:
       device_class: voltage
     - name: "Growatt EPS Iac1"
       state_topic: "growatt/EpsIac1"
+      unit_of_measurement: "A"
+      state_class: measurement
+      device_class: current
+    # EPS phases 2 and 3 are only published for three-phase (TL) Growatt inverters
+    - name: "Growatt EPS Pac2"
+      state_topic: "growatt/EpsPac2"
+      unit_of_measurement: "W"
+      state_class: measurement
+      device_class: power
+    - name: "Growatt EPS Vac2"
+      state_topic: "growatt/EpsVac2"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+    - name: "Growatt EPS Iac2"
+      state_topic: "growatt/EpsIac2"
+      unit_of_measurement: "A"
+      state_class: measurement
+      device_class: current
+    - name: "Growatt EPS Pac3"
+      state_topic: "growatt/EpsPac3"
+      unit_of_measurement: "W"
+      state_class: measurement
+      device_class: power
+    - name: "Growatt EPS Vac3"
+      state_topic: "growatt/EpsVac3"
+      unit_of_measurement: "V"
+      state_class: measurement
+      device_class: voltage
+    - name: "Growatt EPS Iac3"
+      state_topic: "growatt/EpsIac3"
       unit_of_measurement: "A"
       state_class: measurement
       device_class: current
