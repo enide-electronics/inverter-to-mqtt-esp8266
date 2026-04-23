@@ -119,14 +119,9 @@ void WiCMParamConfig::load() {
         File configFile = LittleFS.open(F(PARAMS_FILE), "r");
         if (configFile) {
             GLOG::println(F("WiCM: open config file OK"));
-            size_t size = configFile.size();
-
-            // Allocate a buffer to store contents of the file.
-            std::unique_ptr<char[]> buf(new char[size]);
-            configFile.readBytes(buf.get(), size);
 
             JsonDocument json;
-            auto deserializeError = deserializeJson(json, buf.get());
+            auto deserializeError = deserializeJson(json, configFile);
 
             if ( ! deserializeError ) {
                 GLOG::println(F("WiCM: config json parsed"));
@@ -197,14 +192,9 @@ void WiCMWifiConfig::load() {
         File networkFile = LittleFS.open(F(STA_WIFI_PARAMS_FILE), "r");
         if (networkFile) {
             GLOG::println(F("WiCM: open wifi file OK"));
-            size_t size = networkFile.size();
-
-            // Allocate a buffer to store contents of the file.
-            std::unique_ptr<char[]> buf(new char[size]);
-            networkFile.readBytes(buf.get(), size);
 
             JsonDocument json;
-            auto deserializeError = deserializeJson(json, buf.get());
+            auto deserializeError = deserializeJson(json, networkFile);
 
             if ( ! deserializeError ) {
                 GLOG::println(F("WiCM: wifi json parsed"));
