@@ -13,6 +13,7 @@
 #include <WiFiManager.h>
 #include <ArduinoJson.h>
 #include "WiCMConfig.h"
+#include "StatusPage.h"
 #include <vector>
 
 #define _IMCFBS_SIZE 890
@@ -71,6 +72,11 @@ class WifiAndConfigManager {
         bool saveParamsRequired;
         bool rebootRequired;
         bool wifiConnected;
+
+        // Optional status page; when set, /status is registered on the
+        // WiFiManager web server and a "Status" button is added to the
+        // portal's main menu.
+        StatusPage *statusPage;
         
         void copyFromParamsToVars();
         void show();
@@ -86,6 +92,11 @@ class WifiAndConfigManager {
 
     public:
         WifiAndConfigManager();
+
+        // Must be called before setupWifiAndConfig() to take effect, because
+        // the /status route has to be registered during the WiFiManager web
+        // server callback (before WiFiManager registers its own /status).
+        void setStatusPage(StatusPage *sp);
 
         void setupWifiAndConfig();
 

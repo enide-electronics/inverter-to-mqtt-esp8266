@@ -150,6 +150,7 @@ WifiAndConfigManager::WifiAndConfigManager() {
     saveParamsRequired = false;
     rebootRequired = false;
     wifiConnected = false;
+    statusPage = NULL;
     
     // config var web params
     networkSectionHeaderParam = NULL;
@@ -188,6 +189,10 @@ WifiAndConfigManager::WifiAndConfigManager() {
         delay(1000);
         ESP.restart();
     }
+}
+
+void WifiAndConfigManager::setStatusPage(StatusPage *sp) {
+    statusPage = sp;
 }
 
 void WifiAndConfigManager::saveParamConfigCallback() {
@@ -385,9 +390,34 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     //set config callbacks
     wm.setSaveConfigCallback(std::bind(&WifiAndConfigManager::saveWifiConfigCallback, this));
     wm.setSaveParamsCallback(std::bind(&WifiAndConfigManager::saveParamConfigCallback, this));
-    
+
+    // Register /status on the WM webserver *before* WiFiManager registers its
+    // own /status handler. ESP8266WebServer walks handlers in insertion order
+    // and keeps the first match, so registering first here lets us replace
+    // WM's (empty) /status with our own page. If no StatusPage was wired in,
+    // this callback is a no-op and WM behaves exactly as before.
+    wm.setWebServerCallback([this]() {
+        if (statusPage == NULL || !wm.server) {
+            return;
+        }
+        wm.server->on(String(F("/status")).c_str(), [this]() {
+            String page = statusPage->renderHTML();
+            wm.server->send(200, F("text/html"), page);
+        });
+    });
+
     wm.setTitle("Inverter to MQTT ESP8266");
-    std::vector<const char *> menu = {"wifi", "param", "info", "sep", "restart", "exit"};
+
+    // Add "custom" to the menu when a StatusPage is wired in; this slot is
+    // filled by the HTML passed to setCustomMenuHTML() below and lets the
+    // user jump to /status from the main portal page.
+    std::vector<const char *> menu;
+    if (statusPage != NULL) {
+        menu = {"custom", "wifi", "param", "info", "sep", "restart", "exit"};
+        wm.setCustomMenuHTML(StatusPage::menuButtonHTML());
+    } else {
+        menu = {"wifi", "param", "info", "sep", "restart", "exit"};
+    }
     wm.setMenu(menu);
 
     // add device params

@@ -32,6 +32,7 @@
 #include "InverterFactory.h"
 #include "MqttPublisher.h"
 #include "InverterData.h"
+#include "StatusPage.h"
 #include "TemperatureController.h"
 #include "GLog.h"
 
@@ -67,6 +68,7 @@ Inverter *inverter = NULL;
 MqttPublisher *mqtt = NULL;
 TemperatureController *tempCtrl = NULL;
 WifiAndConfigManager wcm;
+StatusPage statusPage;
 
 void setupTemperatureController() {
     tempCtrl = new TemperatureController(
@@ -136,6 +138,23 @@ void setupLogger() {
     wcm.getWM().setDebugOutput(GLOG::isLogEnabled());
 }
 
+void setupStatusPage() {
+    // Providers capture the *address* of the globals so they keep working
+    // even when mqtt/inverter get deleted and re-created on config changes.
+    statusPage.setMqttConnectedProvider([]() {
+        return mqtt != NULL && mqtt->isConnected();
+    });
+    statusPage.setDarkModeProvider([]() { return wcm.getDarkMode(); });
+    statusPage.setDeviceNameProvider([]() { return wcm.getDeviceName(); });
+    statusPage.setInverterTypeProvider([]() { return wcm.getInverterType(); });
+    statusPage.setMqttServerProvider([]() {
+        return wcm.getMqttServer() + ":" + String(wcm.getMqttPort());
+    });
+    statusPage.setMqttTopicProvider([]() { return wcm.getMqttTopic(); });
+
+    wcm.setStatusPage(&statusPage);
+}
+
 void applyNewConfiguration() {
     delay(1000);
     
@@ -146,6 +165,11 @@ void applyNewConfiguration() {
     delete mqtt;
     delete inverter;
     espClient.stop();
+
+    // Values belonged to the previous inverter instance; drop them so the
+    // status page doesn't show stale readings for an inverter that is no
+    // longer active.
+    statusPage.clearInverterData();
     
     GLOG::println(F("LOOP: New config, creating objects"));
     
@@ -178,6 +202,7 @@ void setup() {
     pinMode(BUTTON, INPUT_PULLUP);
 #endif
     setupLogger();
+    setupStatusPage();
     wcm.setupWifiAndConfig();
     setupInverter();
     auto topics = inverter->getTopicsToSubscribe();
@@ -224,6 +249,10 @@ void loop() {
             GLOG::print(F(", publishing"));
             InverterData data = inverter->getData();
             mqtt->publishData(data);
+            // Inverters may return partial data on each read. Merging into
+            // the status page lets the /status view build up the full set of
+            // measurements over successive polls.
+            statusPage.mergeInverterData(data);
             GLOG::println(F(", done!"));
         } else {
             GLOG::println(F(", failed!"));
