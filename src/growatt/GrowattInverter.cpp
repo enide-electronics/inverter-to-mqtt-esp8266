@@ -93,6 +93,8 @@ void GrowattInverter::read() {
         }
         
     } else  if (stateSequence[currentStateIdx] == 2) {
+        this->tempValid = false;
+
         // Temperatures, Battery and Priority (LoadFirst, BatFirst, GridFirst)
         // start reading at register 93 and read up to 30 registers
         uint8_t result3 = this->node->readInputRegisters(93, 30);
@@ -101,6 +103,7 @@ void GrowattInverter::read() {
             this->temp1 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(0)); //93
             this->temp2 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(1)); //94
             this->temp3 = ModbusUtils::glueFloat(0, this->node->getResponseBuffer(2)); //95
+            this->tempValid = true;
             
             this->deratingMode = this->node->getResponseBuffer(11); //104
 
@@ -208,6 +211,7 @@ GrowattInverter::GrowattInverter(Stream *serial, bool shouldDeleteSerial, uint8_
     this->temp1 = 0.0;
     this->temp2 = 0.0;
     this->temp3 = 0.0;
+    this->tempValid = false;
 
     this->deratingMode = 0;
     this->Priority = 0;
@@ -437,6 +441,10 @@ std::list<String> GrowattInverter::getTopicsToSubscribe()
 }
 
 float GrowattInverter::getMaxTemperature() {
+    if (!this->tempValid) {
+        return NAN;
+    }
+    
     float m = this->temp1;
     if (this->temp2 > m) m = this->temp2;
     if (this->temp3 > m) m = this->temp3;

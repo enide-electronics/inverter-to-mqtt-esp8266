@@ -75,6 +75,7 @@ class GrowattInverter : public Inverter
         float temp1;
         float temp2;
         float temp3;
+        bool tempValid;
         
         uint8_t deratingMode;
         uint8_t Priority;
