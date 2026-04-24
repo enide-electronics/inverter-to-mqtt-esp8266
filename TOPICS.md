@@ -24,7 +24,7 @@ Behaviour:
 - above the turn-ON threshold, the ON payload is published
 - below the turn-OFF threshold, the OFF payload is published
 - between the two thresholds the current state is kept (hysteresis), which avoids flapping
-- the current state is also re-published once per minute as a heartbeat, so the broker always has a fresh value
+- the current state is also re-published once per minute as a heartbeatfor subscribers that are online
 - nothing is published when the inverter does not provide a valid temperature reading (e.g. the `None` inverter)
 
 | Topic                      | Units | Format | Description                                                           |
