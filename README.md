@@ -59,17 +59,17 @@ Everything is **configured via WiFiManager's Captive Portal / Web Portal** and t
 
 When powering up the board for the first time, after uploading the firmware, you are presented with a WiFi network named `inverter-to-mqtt-esp8266` from which you can start the configuration process. 
 
-<img src='images/ss01-main.png' width='320px'>
+<img src='images/ss01-main-dark.png' width='320px'>
 
 After connecting to the `inverter-to-mqtt-esp8266` network you should be able to access the Wifi settings, clicking in `Configure WiFi`, choose the Wifi network, type the password and click **Save**. 
 
-<img src='images/ss02-wifi.png' width='320px'>
+<img src='images/ss03-wifi-dark.png' width='320px'>
 
 Note: If you want to set a static IP address, you need to fill all fields (Static IP, Static gateway, Subnet and Static DNS) before clicking **Save**.
 
 The board will then reboot and connect to the Wifi network you selected. The remaining settings can be made through the Web Portal on the ESP8266 IP address. These include the **inverter model/type**, **polling period**, **MQTT server address and credentials**, etc.
 
-<img src='images/ss03-setup.png' width='320px'>
+<img src='images/ss04-setup-dark.png' width='320px'>
 
 All parameters can be changed on the fly without the need for a restart, except for the `Device name` which will restart the ESP8266 because it is used on DHCP requests and also as the WiFi SoftAP name.
 
@@ -81,6 +81,10 @@ The `Inverter Model` combo box currently includes 5 inverter models:
 * [Voltronic Axpert VMIII](https://voltronicpower.com/en-US/Product/Detail/Axpert-VM-III-1.5KVA-3KVA-5KVA) (Single phase) :warning: **experimental**
 * Test (Publishes random energy data and telemetry, for testing purposes)
 * None (Default after a factory reset, no energy data, just telemetry)
+
+Finally, after the adapter is connected and properly setup, you can access the **status page** from the main menu and see the overall status of the network, broker and inverter values.
+
+<img src='images/ss02-status-dark.png' width='320px'>
 
 ### MQTT
 The complete list of MQTT topics used by this project is available in the [TOPICS.md](TOPICS.md) file.
