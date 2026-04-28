@@ -28,6 +28,7 @@ static const StatusGroup kStatusGroups[] = {
     {
         "AC output",
         {"Pac", "Fac",
+         "Vac",
          "Vac1", "Iac1", "Pac1",
          "Vac2", "Iac2", "Pac2",
          "Vac3", "Iac3", "Pac3",
@@ -35,22 +36,17 @@ static const StatusGroup kStatusGroups[] = {
     },
     {
         "Battery",
-        {"Battery", "BatteryType",
+        {"Battery",
          "Vbat", "Ibat", "Pbat",
-         "SoC", "Pdischarge", "Pcharge",
-         "Pchg1", "Pdis1"}
+         "SoC", "Pdischarge", "Pcharge"}
     },
     {
         "Energy counters",
-        {"Etoday", "Etotal", "Ttotal",
-         "Etoday_pv1", "Etoday_pv2",
-         "Etotal_pv1", "Etotal_pv2",
-         "Echarge_today", "Edischarge_today",
-         "Etogrid_today", "Efromgrid_today"}
+        {"Etoday", "Etotal", "Ttotal"}
     },
     {
         "Temperatures",
-        {"Temp1", "Temp2", "Temp3", "temp_heatsink", "temp_transformer"}
+        {"Temp1", "Temp2", "Temp3", "TempHeatsink"}
     },
     {
         "State",
