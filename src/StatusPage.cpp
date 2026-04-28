@@ -144,7 +144,7 @@ String StatusPage::renderStyle(bool dark) const {
     s += F(
         "<style>"
         ".c,body{text-align:center;font-family:verdana;}"
-        "div,input,select{padding:5px;font-size:1em;margin:5px 0;box-sizing:border-box;}"
+        "div{padding:5px;font-size:1em;margin:5px 0;box-sizing:border-box;}"
         ".wrap{text-align:left;display:inline-block;min-width:260px;max-width:560px;width:100%;}"
         "a{color:#000;font-weight:700;text-decoration:none;}"
         "a:hover{color:#1fa3ec;text-decoration:underline;}"
