@@ -92,7 +92,7 @@ uint16_t VoltronicInverter::calcCRC(uint8_t *pin, uint8_t len) {
 
 String VoltronicInverter::recvResponse(uint16_t replysize) {
     uint16_t n = 0; // number of bytes received
-    int b; // byte received
+    int b = 0; // byte received
     char recvBuffer[RECV_BUF_SIZE];
 
     uint32_t startTimeMillis = millis();

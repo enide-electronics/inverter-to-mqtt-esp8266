@@ -22,12 +22,12 @@ void InverterData::set(const char *name, float value) {
 }
 
 void InverterData::set(const char *name, uint32_t value) {
-    snprintf (msg, MSG_BUFFER_SIZE, "%ld", value);
+    snprintf (msg, MSG_BUFFER_SIZE, "%u", value);
     (*this)[String(name)] = String(msg);
 }
 
 void InverterData::set(const char *name, int32_t value) {
-    snprintf (msg, MSG_BUFFER_SIZE, "%ld", value);
+    snprintf (msg, MSG_BUFFER_SIZE, "%d", value);
     (*this)[String(name)] = String(msg);
 }
 
