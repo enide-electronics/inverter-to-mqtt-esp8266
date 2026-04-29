@@ -28,3 +28,7 @@ void NoneInverter::setIncomingTopicData(const String &topic, const String &value
 std::list<String> NoneInverter::getTopicsToSubscribe() {
     return std::list<String>();
 }
+
+float NoneInverter::getMaxTemperature() {
+    return NAN;
+}

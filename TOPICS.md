@@ -7,7 +7,38 @@ These topics are published every minute. The `<name>` part corresponds to value 
 | `<name>/tele/Uptime`       | -     | text   | Uptime                                                                |
 | `<name>/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
 | `<name>/tele/RSSI`         | -     | int    | ESP8266 WiFi RSSI value in dBm, negative number                       |
+
+
+# Temperature controller topic
+The temperature controller is an optional, inverter-agnostic feature that publishes a simple ON/OFF command to any MQTT topic of your choice, based on the inverter's reported maximum temperature. It is typically used to drive an external cooling device (a smart plug, a fan relay, etc.) listening on that topic, so that the inverter is cooled automatically when it gets hot.
+
+It is configured via the Web Portal, where you can:
+- enable/disable the feature
+- set the **target MQTT topic** (absolute, i.e. **not** prefixed by `<name>`)
+- set the **ON** and **OFF** payloads (defaults: `ON` / `OFF`)
+- set the **turn-ON threshold** in °C (default `40.0`)
+- set the **turn-OFF threshold** in °C (default `35.0`)
+
+Behaviour:
+- the inverter's max temperature is re-evaluated every few seconds
+- above the turn-ON threshold, the ON payload is published
+- below the turn-OFF threshold, the OFF payload is published
+- between the two thresholds the current state is kept (hysteresis), which avoids flapping
+- the current state is also re-published once per minute as a heartbeatfor subscribers that are online
+- nothing is published when the inverter does not provide a valid temperature reading (e.g. the `None` inverter)
+
+| Topic                      | Units | Format | Description                                                           |
 |----------------------------|-------|--------|-----------------------------------------------------------------------|
+| `<user-defined>`           | -     | text   | Configurable absolute topic, publishes the ON or OFF payload          |
+
+
+Example: with the target topic set to `home/office/fan/cmd`, ON payload `ON`, OFF payload `OFF`, turn-ON at `45.0` °C and turn-OFF at `40.0` °C, the firmware will publish messages like:
+
+```
+home/office/fan/cmd ON      # inverter temperature reached 45 °C or more
+home/office/fan/cmd OFF     # inverter temperature dropped below 40 °C
+home/office/fan/cmd ON      # heartbeat, one minute later, state unchanged
+```
 
 # Growatt MQTT Topics
 Please note that the "growatt" prefix in all topics shown below is the one selected for my Growatt inverter. It is configurable via the web interface if you want to change it. [See here](README.md).
@@ -202,7 +233,7 @@ Energy data is polled periodically from the messages sent by the CPU to the disp
 | `gtn1200w/tele/Uptime`       | -     | text   | Uptime                                                                |
 | `gtn1200w/tele/ClientID`     | -     | text   | MQTT client ID                                                        |
 | `gtn1200w/tele/RSSI    `     | -     | int    | ESP8266 WiFi RSSI value, between 0 and 255                            |
-|------------------------------|-------|--------|-----------------------------------------------------------------------|
+
 
 ## Limiter / Meter function
 The limiter/meter function of the Soyosource can be used by connecting the ESP8266 via RS485 to the inverter (see the connections diagram [here](HARDWARE.md#connections-diagram)). The ESP8266 listens to the power value (in Watts), to sent to the inverter every 250ms, on the MQTT show below.
@@ -210,7 +241,7 @@ The limiter/meter function of the Soyosource can be used by connecting the ESP82
 | Topic                        | Units | Format | Description                                                           |
 |------------------------------|-------|--------|-----------------------------------------------------------------------|
 | `gtn1200w/settings/power`    | Watts | int    | Limiter/Meter demand power (to use the inverter in `PV Limit` mode), min = 0, max = 1200   |
-|------------------------------|-------|--------|-----------------------------------------------------------------------|
+
 
 # Voltronic Axpert VM III
 TBD

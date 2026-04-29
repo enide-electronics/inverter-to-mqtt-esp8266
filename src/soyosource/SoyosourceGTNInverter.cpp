@@ -18,6 +18,7 @@
 #include "SoyosourceGTNInverter.h"
 #include "../GLog.h"
 #include "../GlobalDefs.h"
+#include <string>
 
 #define SOF_REQUEST 0x55
 #define DISPLAY_PROTOCOL 0
@@ -49,6 +50,8 @@ SoyosourceGTNInverter::SoyosourceGTNInverter(Stream *serial, bool shouldDeleteSe
     this->shouldDeleteSerial = shouldDeleteSerial;
     this->lastReadMillis = millis();
     this->unknownFrameCounter = 0;
+    this->temperature = NAN;
+    this->isValid = false;
 }
 
 SoyosourceGTNInverter::~SoyosourceGTNInverter() {
@@ -231,6 +234,10 @@ std::list<String> SoyosourceGTNInverter::getTopicsToSubscribe() {
     return topics;
 }
 
+float SoyosourceGTNInverter::getMaxTemperature() {
+    return this->temperature;
+}
+
 bool SoyosourceGTNInverter::extractDisplayStatusData(const std::vector<uint8_t> &data) {
     auto soyosource_get_16bit = [&](size_t i) -> uint16_t {
         return (uint16_t(data[i + 0]) << 8) | (uint16_t(data[i + 1]) << 0);
@@ -278,7 +285,9 @@ bool SoyosourceGTNInverter::extractDisplayStatusData(const std::vector<uint8_t> 
     inverterData.set("Fac", data[11] / 2.0f);
     
     // 12    2   0x02 0xBC              Temperature
-    inverterData.set("Temp", (soyosource_get_16bit(12) - 300) * 0.1f);
+    float displayTemp = (soyosource_get_16bit(12) - 300) * 0.1f;
+    this->temperature = displayTemp;
+    inverterData.set("Temp", displayTemp);
 
     return true;
 }
@@ -340,6 +349,7 @@ bool SoyosourceGTNInverter::extractMS51StatusData(const std::vector<uint8_t> &da
     inverterData.set("Etotal", soyosource_get_16bit(13) * 0.1f);
 
     // 15    1   0x17                   Temperature          1.0         °C          23 °C
+    this->temperature = (float) data[15];
     inverterData.set("Temp", data[15]);
 
     return true;

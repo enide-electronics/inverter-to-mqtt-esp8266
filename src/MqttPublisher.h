@@ -34,6 +34,7 @@ class MqttPublisher {
         void publishData(InverterData &data);
         void publishTele();
         void publishOnline();
+        bool publishFanCmdMsg(const char *absoluteTopic, const char *payload);
         
         void setClientId(String &clientId);
         void setCallback(void (*callback)(char* topic, byte* payload, unsigned int length));

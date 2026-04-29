@@ -146,3 +146,17 @@ String MultiGrowattInverter::stripAddrFromTopic(const String & path) {
     return path.substring(pos + 1);
 }
 
+float MultiGrowattInverter::getMaxTemperature() {
+    float result = NAN;
+    for (const auto & inverterEntry : this->inverters) {
+        float t = inverterEntry.second->getMaxTemperature();
+        if (isnan(t)) {
+            continue;
+        }
+        if (isnan(result) || t > result) {
+            result = t;
+        }
+    }
+    return result;
+}
+

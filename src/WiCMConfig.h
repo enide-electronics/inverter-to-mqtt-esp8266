@@ -27,7 +27,19 @@ class WiCMParamConfig {
         std::vector<int> modbusAddresses;
         int modbusPollingInSeconds;
         String inverterType;
-        
+
+        // UI appearance: dark mode for the configuration web portal
+        bool darkMode;
+
+        // Temperature controller - publishes ON/OFF to another device's MQTT topic
+        // based on the maximum inverter temperature, evaluated few seconds (with heartbeat sent once per minute).
+        bool tempCtrlEnabled;
+        String tempCtrlTopic;
+        String tempCtrlPayloadOn;
+        String tempCtrlPayloadOff;
+        float tempCtrlThresholdOn;
+        float tempCtrlThresholdOff;
+
         WiCMParamConfig();
         virtual ~WiCMParamConfig();
 

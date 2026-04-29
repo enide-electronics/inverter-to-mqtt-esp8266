@@ -31,6 +31,7 @@ class GrowattInverter : public Inverter
         virtual InverterData getData(bool fullSet = false);
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
+        virtual float getMaxTemperature();
 
     private:
         void incrementStateIdx();
@@ -74,6 +75,7 @@ class GrowattInverter : public Inverter
         float temp1;
         float temp2;
         float temp3;
+        bool tempValid;
         
         uint8_t deratingMode;
         uint8_t Priority;

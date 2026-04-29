@@ -10,6 +10,7 @@
 #include "GrowattTaskFactory.h"
 #include "GrowattPriorityTask.h"
 #include "GrowattReadHoldingTask.h"
+#include "GrowattReadInputTask.h"
 #include "GrowattPriorityTimeConfigTask.h"
 #include "GrowattPriorityBatteryFirstACChargerConfigTask.h"
 #include "GrowattPriorityPowerRatingConfigTask.h"
@@ -39,7 +40,7 @@ Task* GrowattTaskFactory::create(ModbusMaster *node, const String &topic, const 
                 task = new GrowattPriorityStopStateOfChargeConfigTask(node, whichPriority, value);
             }
         }
-    } else if (topic == String(F(TOPIC_SETTINGS_READ_HOLDING_TASK))) {
+    } else if (topic == String(F(TOPIC_SETTINGS_READ_HOLDING_TASK)) || topic == String(F(TOPIC_SETTINGS_READ_INPUT_TASK))) {
         String payload = value;
         String fields[2];
         uint8_t fieldsIndex = 0;
@@ -59,7 +60,11 @@ Task* GrowattTaskFactory::create(ModbusMaster *node, const String &topic, const 
         if (fieldsIndex == 2) {
             uint16_t addr = fields[0].toInt();
             uint8_t length = fields[1].toInt();
-            task = new GrowattReadHoldingTask(node, addr, length);
+            if (topic == String(F(TOPIC_SETTINGS_READ_HOLDING_TASK))) {
+                task = new GrowattReadHoldingTask(node, addr, length);
+            } else {
+                task = new GrowattReadInputTask(node, addr, length);
+            }
         }
     }
     
@@ -71,6 +76,7 @@ std::list<String> GrowattTaskFactory::registeredSubtopics() {
     
     topics.push_back(F(TOPIC_SETTINGS_PRIORITY));
     topics.push_back(F(TOPIC_SETTINGS_READ_HOLDING_TASK));
+    topics.push_back(F(TOPIC_SETTINGS_READ_INPUT_TASK));
     
     topics.push_back(F("settings/priority/bat/t1"));
     //topics.push_back(F("settings/priority/bat/t2"));

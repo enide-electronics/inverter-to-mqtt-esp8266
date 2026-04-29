@@ -166,3 +166,10 @@ std::list<String> MicInverter::getTopicsToSubscribe() {
     // no subscriptions, no commands
     return std::list<String>();
 }
+
+float MicInverter::getMaxTemperature() {
+    if (!this->valid) {
+        return NAN;
+    }
+    return (this->tempInverter > this->tempIPM) ? this->tempInverter : this->tempIPM;
+}

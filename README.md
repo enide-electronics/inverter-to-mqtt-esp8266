@@ -24,7 +24,7 @@ Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code fo
 
 ## Main features
 - All configuration is done via web interface (captive portal and web portal)
-- Configuration is stored in SPIFFS as JSON files
+- Configuration is stored in LittleFS as JSON files
 - Inverter model/type is selected in the web portal
 - Periodically polls data from the inverter and publishes it to the MQTT server via Wifi
 - Polling period is configurable (in seconds)
@@ -40,6 +40,7 @@ Support for Voltronic inverters is being slowly tested. As of v3.0.0 the code fo
 - Poll multiple Growatt inverters on the same RS485 bus
   - Each inverter should have its own modbus address
   - Enabled in the `WebUI -> Setup -> Inverter modbus address` field by setting a list of addresses, eg: `1,2,4`
+- Optional **temperature-driven MQTT controller** that publishes ON/OFF to a user-defined topic (e.g. to switch an external fan or smart plug on/off) based on the inverter temperature, with configurable thresholds and hysteresis. See [TOPICS.md](TOPICS.md#temperature-controller-topic) for details.
 - Prebuilt binaries, ie no need to recompile the code
 - No cloud, all energy data is under your control
 
@@ -54,21 +55,21 @@ Check the [releases](https://github.com/enide-electronics/inverter-to-mqtt-esp82
 See [BUILD.md](BUILD.md) for more details, if you really want to compile it on your own.
 
 ## Configuration
-Everything is **configured via WiFiManager's Captive Portal / Web Portal** and the configuration is stored in the SPIFFS file system, in JSON files.
+Everything is **configured via WiFiManager's Captive Portal / Web Portal** and the configuration is stored in the LittleFS file system, in JSON files.
 
 When powering up the board for the first time, after uploading the firmware, you are presented with a WiFi network named `inverter-to-mqtt-esp8266` from which you can start the configuration process. 
 
-<img src='images/ss01-main.png' width='320px'>
+<img src='images/ss01-main-dark.png' width='320px'>
 
 After connecting to the `inverter-to-mqtt-esp8266` network you should be able to access the Wifi settings, clicking in `Configure WiFi`, choose the Wifi network, type the password and click **Save**. 
 
-<img src='images/ss02-wifi.png' width='320px'>
+<img src='images/ss03-wifi-dark.png' width='320px'>
 
 Note: If you want to set a static IP address, you need to fill all fields (Static IP, Static gateway, Subnet and Static DNS) before clicking **Save**.
 
 The board will then reboot and connect to the Wifi network you selected. The remaining settings can be made through the Web Portal on the ESP8266 IP address. These include the **inverter model/type**, **polling period**, **MQTT server address and credentials**, etc.
 
-<img src='images/ss03-setup.png' width='320px'>
+<img src='images/ss04-setup-dark.png' width='320px'>
 
 All parameters can be changed on the fly without the need for a restart, except for the `Device name` which will restart the ESP8266 because it is used on DHCP requests and also as the WiFi SoftAP name.
 
@@ -80,6 +81,10 @@ The `Inverter Model` combo box currently includes 5 inverter models:
 * [Voltronic Axpert VMIII](https://voltronicpower.com/en-US/Product/Detail/Axpert-VM-III-1.5KVA-3KVA-5KVA) (Single phase) :warning: **experimental**
 * Test (Publishes random energy data and telemetry, for testing purposes)
 * None (Default after a factory reset, no energy data, just telemetry)
+
+Finally, after the adapter is connected and properly setup, you can access the **status page** from the main menu and see the overall status of the network, broker and inverter values.
+
+<img src='images/ss02-status-dark.png' width='320px'>
 
 ### MQTT
 The complete list of MQTT topics used by this project is available in the [TOPICS.md](TOPICS.md) file.

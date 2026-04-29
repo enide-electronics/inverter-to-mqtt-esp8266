@@ -1,7 +1,7 @@
 #include "TestInverter.h"
 
 TestInverter::TestInverter() {
-
+    this->temperature = NAN;
 }
 
 TestInverter::~TestInverter() {
@@ -42,6 +42,10 @@ InverterData TestInverter::getData(bool fullSet) {
     data.set("Pac", p);
     data.set("Fac", (float) 50.0);
 
+    // Simulate a plausible inverter temperature between 25 .. 75 degC
+    this->temperature = random(250, 750) / 10.0f;
+    data.set("Temp", this->temperature);
+
     return data;
 }
 
@@ -51,4 +55,8 @@ void TestInverter::setIncomingTopicData(const String &topic, const String &value
 
 std::list<String> TestInverter::getTopicsToSubscribe() {
     return std::list<String>();
+}
+
+float TestInverter::getMaxTemperature() {
+    return this->temperature;
 }

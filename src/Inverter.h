@@ -25,6 +25,12 @@ class Inverter
         
         virtual void setIncomingTopicData(const String &topic, const String &value) = 0;
         virtual std::list<String> getTopicsToSubscribe() = 0;
+
+        // Returns the current (maximum) inverter temperature in degrees Celsius.
+        // Inverters with multiple temperature sensors must return the highest one.
+        // Return NAN when no temperature data is available or the inverter has no
+        // temperature sensor at all.
+        virtual float getMaxTemperature() = 0;
 };
 
 #endif

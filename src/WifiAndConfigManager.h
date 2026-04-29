@@ -1,6 +1,6 @@
 /*
   WifiAndConfigManager.h - Library header for the ESP8266/ESP32 Arduino platform
-  SPIFFS based configuration
+  LittleFS based configuration
 
   Written by JF enide.electronics (at) enide.net
   Licensed under GNU GPLv3
@@ -13,6 +13,7 @@
 #include <WiFiManager.h>
 #include <ArduinoJson.h>
 #include "WiCMConfig.h"
+#include "StatusPage.h"
 #include <vector>
 
 #define _IMCFBS_SIZE 890
@@ -23,20 +24,43 @@ class WifiAndConfigManager {
         WiFiManager wm;
         
         // Setup params
+        WiFiManagerParameter *networkSectionHeaderParam;
         WiFiManagerParameter *deviceNameParam;
         WiFiManagerParameter *softApPasswordParam;
+        WiFiManagerParameter *mqttSectionHeaderParam;
         WiFiManagerParameter *mqttServerParam;
         WiFiManagerParameter *mqttPortParam;
         WiFiManagerParameter *mqttUsernameParam;
         WiFiManagerParameter *mqttPasswordParam;
         WiFiManagerParameter *mqttBaseTopicParam;
+        WiFiManagerParameter *inverterSectionHeaderParam;
         WiFiManagerParameter *modbusAddressParam;
         WiFiManagerParameter *modbusPollingInSecondsParam;
         
         char inverterModelCustomFieldBufferStr[_IMCFBS_SIZE];
         WiFiManagerParameter *inverterModelCustomFieldParam;
         WiFiManagerParameter *inverterTypeCustomHidden;
-        
+        int inverterTypeComboboxParamIdx;
+
+        // UI appearance params (dark mode checkbox)
+        WiFiManagerParameter *uiSectionHeaderParam;
+        WiFiManagerParameter *darkModeCustomParam;
+        WiFiManagerParameter *darkModeHidden;
+        char darkModeBuffer[512];
+        int darkModeCheckboxParamIdx;
+
+        // Temperature controller params
+        WiFiManagerParameter *tempCtrlSectionHeaderParam;
+        WiFiManagerParameter *tempCtrlEnabledCustomParam;
+        WiFiManagerParameter *tempCtrlEnabledHidden;
+        WiFiManagerParameter *tempCtrlTopicParam;
+        WiFiManagerParameter *tempCtrlPayloadOnParam;
+        WiFiManagerParameter *tempCtrlPayloadOffParam;
+        WiFiManagerParameter *tempCtrlThresholdOnParam;
+        WiFiManagerParameter *tempCtrlThresholdOffParam;
+        char tempCtrlEnabledBuffer[512];
+        int tempCtrlCheckboxParamIdx;
+
         // setup vars
         WiCMParamConfig paramsCfg;
 
@@ -48,6 +72,11 @@ class WifiAndConfigManager {
         bool saveParamsRequired;
         bool rebootRequired;
         bool wifiConnected;
+
+        // Optional status page; when set, /status is registered on the
+        // WiFiManager web server and a "Status" button is added to the
+        // portal's main menu.
+        StatusPage *statusPage;
         
         void copyFromParamsToVars();
         void show();
@@ -56,10 +85,18 @@ class WifiAndConfigManager {
         void handleEraseAll();
         String getParam(String name);
         void _updateInverterTypeSelect();
+        void _updateTempCtrlCheckbox();
+        void _updateDarkModeCheckbox();
+        void _applyDarkModeHead();
         void _recycleParams();
 
     public:
         WifiAndConfigManager();
+
+        // Must be called before setupWifiAndConfig() to take effect, because
+        // the /status route has to be registered during the WiFiManager web
+        // server callback (before WiFiManager registers its own /status).
+        void setStatusPage(StatusPage *sp);
 
         void setupWifiAndConfig();
 
@@ -72,6 +109,15 @@ class WifiAndConfigManager {
         std::vector<int> getModbusAddresses();
         int getModbusPollingInSeconds();
         String getInverterType();
+
+        bool getDarkMode();
+
+        bool getTempCtrlEnabled();
+        String getTempCtrlTopic();
+        String getTempCtrlPayloadOn();
+        String getTempCtrlPayloadOff();
+        float getTempCtrlThresholdOn();
+        float getTempCtrlThresholdOff();
 
         WiFiManager & getWM();
         void loop();

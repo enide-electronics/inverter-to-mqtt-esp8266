@@ -31,6 +31,7 @@ class MicInverter : public Inverter
         virtual InverterData getData(bool fullSet = false);
         virtual void setIncomingTopicData(const String &topic, const String &value);
         virtual std::list<String> getTopicsToSubscribe();
+        virtual float getMaxTemperature();
 
     private:
         Stream *serial;
