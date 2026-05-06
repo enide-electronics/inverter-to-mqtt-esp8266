@@ -20,7 +20,7 @@ Task* GrowattTaskFactory::create(ModbusMaster *node, const String &topic, const 
     Task *task = NULL;
     
     // set priority: "/settings/priority"
-    if (topic == String(F(TOPIC_SETTINGS_PRIORITY))) {
+    if (topic == F(TOPIC_SETTINGS_PRIORITY)) {
         task = new GrowattPriorityTask(node, value);
     } else if (topic.startsWith(F(TOPIC_SETTINGS_PRIORITY))) {
         // per priority configs like ac, pr, ssoc
@@ -30,17 +30,17 @@ Task* GrowattTaskFactory::create(ModbusMaster *node, const String &topic, const 
             String whichPriority = ss.getItemAtIndex(2);
             String whichConfig = ss.getItemAtIndex(3);
             
-            if ((whichPriority == "bat" || whichPriority == "grid") && (whichConfig == "t1" || whichConfig == "t2" || whichConfig == "t3")) {
+            if ((whichPriority == F("bat") || whichPriority == F("grid")) && (whichConfig == F("t1") || whichConfig == F("t2") || whichConfig == F("t3"))) {
                 task = new GrowattPriorityTimeConfigTask(node, ss.getItemAtIndex(2), ss.getItemAtIndex(3), value);
-            } else if (whichPriority == "bat" && whichConfig == "ac") {
+            } else if (whichPriority == F("bat") && whichConfig == F("ac")) {
                 task = new GrowattPriorityBatteryFirstACChargerConfigTask(node, value);
-            } else if ((whichPriority == "bat" || whichPriority == "grid") && whichConfig == "pr") {
+            } else if ((whichPriority == F("bat") || whichPriority == F("grid")) && whichConfig == F("pr")) {
                 task = new GrowattPriorityPowerRatingConfigTask(node, whichPriority, value);
-            } else if ((whichPriority == "bat" || whichPriority == "grid") && whichConfig == "ssoc") {
+            } else if ((whichPriority == F("bat") || whichPriority == F("grid")) && whichConfig == F("ssoc")) {
                 task = new GrowattPriorityStopStateOfChargeConfigTask(node, whichPriority, value);
             }
         }
-    } else if (topic == String(F(TOPIC_SETTINGS_READ_HOLDING_TASK)) || topic == String(F(TOPIC_SETTINGS_READ_INPUT_TASK))) {
+    } else if (topic == F(TOPIC_SETTINGS_READ_HOLDING_TASK) || topic == F(TOPIC_SETTINGS_READ_INPUT_TASK)) {
         String payload = value;
         String fields[2];
         uint8_t fieldsIndex = 0;
@@ -60,7 +60,7 @@ Task* GrowattTaskFactory::create(ModbusMaster *node, const String &topic, const 
         if (fieldsIndex == 2) {
             uint16_t addr = fields[0].toInt();
             uint8_t length = fields[1].toInt();
-            if (topic == String(F(TOPIC_SETTINGS_READ_HOLDING_TASK))) {
+            if (topic == F(TOPIC_SETTINGS_READ_HOLDING_TASK)) {
                 task = new GrowattReadHoldingTask(node, addr, length);
             } else {
                 task = new GrowattReadInputTask(node, addr, length);

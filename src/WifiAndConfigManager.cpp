@@ -71,7 +71,7 @@ const char inverterTypeSelectStr[] PROGMEM = R"(
 // dark palette. setCustomHeadElement() only stores the raw pointer, so this
 // must live in RAM (.rodata/.data), not PROGMEM.
 const char darkModeHeadElement[] =
-  "<style>select{width:100%;border-radius:.3rem;background:white;font-size:1em;padding:5px;margin:5px 0;}</style>"
+  "<style>select{width:100%;border-radius:.3rem;font-size:1em;padding:5px;margin:5px 0;}</style>"
   "<style>"
   "body{background:#1e1e1e;color:#e6e6e6;}"
   "a,a:visited{color:#64b5f6;}"
@@ -184,7 +184,7 @@ WifiAndConfigManager::WifiAndConfigManager() {
     darkModeCheckboxParamIdx = -1;
 
     if (!LittleFS.begin()) {
-        GLOG::println(("WiCM: FS mount failed"));
+        GLOG::println(F("WiCM: FS mount failed"));
         
         delay(1000);
         ESP.restart();
@@ -204,10 +204,10 @@ void WifiAndConfigManager::saveWifiConfigCallback() {
     GLOG::println(F("WiCM: Save WIFI config callback"));
     
     // do not try to read these fields outside this function, it will segfault
-    String ip = getParam("ip");
-    String gw = wm.server->arg("gw");
-    String sn = wm.server->arg("sn");
-    String dns = wm.server->arg("dns");
+    String ip = getParam(F("ip"));
+    String gw = wm.server->arg(F("gw"));
+    String sn = wm.server->arg(F("sn"));
+    String dns = wm.server->arg(F("dns"));
 
     if (ip != "" && gw != "" && sn != "" && dns != "") {
         GLOG::print(F("WiCM: STA IP: "));
@@ -225,11 +225,11 @@ void WifiAndConfigManager::saveWifiConfigCallback() {
         bool dnsOK = wifiCfg.dns.fromString(dns);
 
         if (!ipOK || !gwOK || !snOK || !dnsOK) {
-            GLOG::printf("WiCM: Invalid static IP configuration\nWiCM: ipOK=%d, gwOK=%d, snOK=%d, dnsOK=%d\n", ipOK, gwOK, snOK, dnsOK);
+            GLOG::printf_P(PSTR("WiCM: Invalid static IP configuration\nWiCM: ipOK=%d, gwOK=%d, snOK=%d, dnsOK=%d\n"), ipOK, gwOK, snOK, dnsOK);
         }
 
     } else {
-        GLOG::println("WiCM: Enabling DHCP IP");
+        GLOG::println(F("WiCM: Enabling DHCP IP"));
         wifiCfg.ip = IPAddress();
         wifiCfg.gw = IPAddress();
         wifiCfg.sn = IPAddress();;
@@ -260,7 +260,7 @@ void WifiAndConfigManager::doFactoryReset() {
     GLOG::println(F("WiCM: DELETE ESP WIFI CONFIG"));
     ESP.eraseConfig();
 
-    GLOG::println("WiCM: FACTORY RESET DONE");
+    GLOG::println(F("WiCM: FACTORY RESET DONE"));
 }
 
 void WifiAndConfigManager::_updateInverterTypeSelect() {
@@ -367,20 +367,20 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     inverterTypeComboboxParamIdx = -1;
     _updateInverterTypeSelect();
-    inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "Will be hidden", paramsCfg.inverterType.c_str(), 10);
+    inverterTypeCustomHidden = new WiFiManagerParameter("im_key_custom", "IT hidden", paramsCfg.inverterType.c_str(), 10);
 
     // UI appearance params (must be created before being assigned inside _updateDarkModeCheckbox)
     uiSectionHeaderParam = new WiFiManagerParameter(uiSectionHeaderStr);
     darkModeCheckboxParamIdx = -1;
     _updateDarkModeCheckbox();
-    darkModeHidden = new WiFiManagerParameter("dm_en_hidden", "Dark mode enabled (hidden)", paramsCfg.darkMode ? "1" : "0", 2);
+    darkModeHidden = new WiFiManagerParameter("dm_en_hidden", "DME hidden", paramsCfg.darkMode ? "1" : "0", 2);
 
     // temperature controller params
     tempCtrlSectionHeaderParam = new WiFiManagerParameter(tempCtrlSectionHeaderStr);
     tempCtrlCheckboxParamIdx = -1;
     _updateTempCtrlCheckbox();
-    tempCtrlEnabledHidden = new WiFiManagerParameter("tc_en_hidden", "Temp controller enabled (hidden)", paramsCfg.tempCtrlEnabled ? "1" : "0", 2);
-    tempCtrlTopicParam = new WiFiManagerParameter("tc_topic", "Target MQTT topic (absolute, e.g. fan/cmd)", paramsCfg.tempCtrlTopic.c_str(), 96);
+    tempCtrlEnabledHidden = new WiFiManagerParameter("tc_en_hidden", "TCE hidden", paramsCfg.tempCtrlEnabled ? "1" : "0", 2);
+    tempCtrlTopicParam = new WiFiManagerParameter("tc_topic", "Target MQTT topic (e.g. fan/cmd)", paramsCfg.tempCtrlTopic.c_str(), 96);
     tempCtrlPayloadOnParam = new WiFiManagerParameter("tc_on", "Payload ON", paramsCfg.tempCtrlPayloadOn.c_str(), 24);
     tempCtrlPayloadOffParam = new WiFiManagerParameter("tc_off", "Payload OFF", paramsCfg.tempCtrlPayloadOff.c_str(), 24);
     tempCtrlThresholdOnParam = new WiFiManagerParameter("tc_th_on", "Turn ON above (&deg;C)", String(paramsCfg.tempCtrlThresholdOn, 1).c_str(), 6);
@@ -406,7 +406,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
         });
     });
 
-    wm.setTitle("Inverter to MQTT ESP8266");
+    wm.setTitle(F("Inverter to MQTT ESP8266"));
 
     // Add "custom" to the menu when a StatusPage is wired in; this slot is
     // filled by the HTML passed to setCustomMenuHTML() below and lets the
@@ -477,14 +477,14 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     // now connect with the wifi info previously stored
     bool res = wm.autoConnect(paramsCfg.deviceName.c_str(), paramsCfg.softApPassword.c_str());
     if (!res) {
-        GLOG::println("WiCM: Failed to connect to wifi, restarting...");
+        GLOG::println(F("WiCM: Failed to connect to wifi, restarting..."));
         delay(1000);
         
         ESP.restart();
     } else {
         wifiConnected = WiFi.status() == WL_CONNECTED;
         wm.startWebPortal();
-        wm.server->on((String(FPSTR("/eraseall")).c_str()), std::bind(&WifiAndConfigManager::handleEraseAll, this));
+        wm.server->on((String(F("/eraseall")).c_str()), std::bind(&WifiAndConfigManager::handleEraseAll, this));
     }
 
     GLOG::println("");
@@ -702,14 +702,14 @@ void WifiAndConfigManager::loop() {
         bool connected = wm.autoConnect(paramsCfg.deviceName.c_str(), paramsCfg.softApPassword.c_str());
 
         if (!connected && ++connectRetries > 5) {
-            GLOG::println("WiCM: Failed to connect to wifi, restarting...");
+            GLOG::println(F("WiCM: Failed to connect to wifi, restarting..."));
             delay(1000);
             
             ESP.restart();
         }
         
         if (!isWifiConnected()) {
-            GLOG::printf("WiCM: Failed to connect to wifi, retry %d", connectRetries);
+            GLOG::printf_P(PSTR("WiCM: Failed to connect to wifi, retry %d"), connectRetries);
         }
 
         delay(1000);
@@ -750,7 +750,7 @@ bool WifiAndConfigManager::isWifiConnected() {
     bool wifiConnectedNow = WiFi.status() == WL_CONNECTED;
     
     if (wifiConnected != wifiConnectedNow) {
-        GLOG::println(String(F("WiCM: WiFi ")) + String(wifiConnectedNow ? F("") : F("dis")) + String("connected"));
+        GLOG::println(String(F("WiCM: WiFi ")) + String(wifiConnectedNow ? F("") : F("dis")) + F("connected"));
         wifiConnected = wifiConnectedNow;
     }
     
