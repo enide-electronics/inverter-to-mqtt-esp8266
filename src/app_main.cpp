@@ -142,14 +142,17 @@ void applyNewConfiguration() {
 
 bool isFactoryResetRequested() {
 #ifdef LARGE_ESP_BOARD
-    static unsigned long buttonLastReleasedMillis = millis();
+    static unsigned long pressStart = 0;
     unsigned long now = millis();
 
-    if (BUTTON == LOW && now - buttonLastReleasedMillis > 30000UL) {
-        return true;
-    } 
-
-    buttonLastReleasedMillis = millis();
+    if (BUTTON == LOW) {               // button is pressed, start counting
+        if (pressStart == 0) pressStart = now;
+        if (now - pressStart >= 30000UL) {
+            return true;
+        }
+    } else {                           // button released
+        pressStart = 0;
+    }
 #endif
 
     return false;
