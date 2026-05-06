@@ -66,7 +66,7 @@ void VirtualLimiter::loop() {
         messageBuffer[7] = chksum & 0xFF; // 0xFF is not needed, this is already an 8 bit variable
         
         rs485Port.write(messageBuffer, 8);
-        GLOG::printf("METR: demand=%d, ph=0x%02x, pl=0x%02x, chksum=0x%02x\n", demandPower, pHigh, pLow, chksum);
+        GLOG::printf_P(PSTR("METR: demand=%d, ph=0x%02x, pl=0x%02x, chksum=0x%02x\n"), demandPower, pHigh, pLow, chksum);
     }
 #endif
 }

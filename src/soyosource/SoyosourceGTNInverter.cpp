@@ -112,7 +112,7 @@ bool SoyosourceGTNInverter::parseSoyosourceDisplayByte(uint8_t byte) {
     
     if (at == 0) {
         if (raw[0] != SOF_SOYO_RESPONSE && raw[0] != SOF_MS51_RESPONSE) {
-            GLOG::printf("INVERTER: Invalid header: 0x%02X\n", raw[0]);
+            GLOG::printf_P(PSTR("INVERTER: Invalid header: 0x%02X\n"), raw[0]);
 
             // return false to reset buffer
             return false;
@@ -145,7 +145,7 @@ bool SoyosourceGTNInverter::parseSoyosourceDisplayByte(uint8_t byte) {
     uint8_t remote_crc = raw[frame_len - 1];
     
     if (computed_crc != remote_crc) {
-        GLOG::printf("INVERTER: CRC error: 0x%02X != 0x%02X\n", computed_crc, remote_crc);
+        GLOG::printf_P(PSTR("INVERTER: CRC error: 0x%02X != 0x%02X\n"), computed_crc, remote_crc);
         return false;
     }
 
@@ -158,7 +158,7 @@ bool SoyosourceGTNInverter::parseSoyosourceDisplayByte(uint8_t byte) {
 
 void SoyosourceGTNInverter::decodeFrameData(const uint8_t &function, const std::vector<uint8_t> &data) {
     if (data.size() != SOF_SOYO_RESPONSE_LEN && data.size() != SOF_MS51_RESPONSE_LEN) {
-        GLOG::println("INVERTER: Invalid frame size");
+        GLOG::println(F("INVERTER: Invalid frame size"));
         isValid = buildErrorData(data);
         return;
     }
@@ -172,10 +172,10 @@ void SoyosourceGTNInverter::decodeFrameData(const uint8_t &function, const std::
                 isValid = this->extractMS51StatusData(data);
                 break;
             case SETTINGS_COMMAND:
-                GLOG::println("INVERTER: Ignoring settings frame");
+                GLOG::println(F("INVERTER: Ignoring settings frame"));
                 break;
             default:
-                GLOG::printf("INVERTER: Ignoring MS51 frame, src=0x%02x, func=0x%02x\n", response_source, function);
+                GLOG::printf_P(PSTR("INVERTER: Ignoring MS51 frame, src=0x%02x, func=0x%02x\n"), response_source, function);
         }
     } else if (response_source == SOF_SOYO_RESPONSE) {
         switch (function) {
@@ -183,13 +183,13 @@ void SoyosourceGTNInverter::decodeFrameData(const uint8_t &function, const std::
                 isValid = this->extractDisplayStatusData(data);
                 break;
             case SETTINGS_COMMAND:
-                GLOG::println("INVERTER: Ignoring settings frame");
+                GLOG::println(F("INVERTER: Ignoring settings frame"));
                 break;
             default:
-                GLOG::printf("INVERTER: Ignoring frame, src=0x%02x, func=0x%02x\n", response_source, function);
+                GLOG::printf_P(PSTR("INVERTER: Ignoring frame, src=0x%02x, func=0x%02x\n"), response_source, function);
         }
     } else {
-        GLOG::printf("INVERTER: Ignoring unknwon frame, src=0x%02x, func=0x%02x\n", response_source, function);
+        GLOG::printf_P(PSTR("INVERTER: Ignoring unknwon frame, src=0x%02x, func=0x%02x\n"), response_source, function);
         isValid = buildErrorData(data, response_source, function);
     }
 }
@@ -221,7 +221,7 @@ void SoyosourceGTNInverter::setIncomingTopicData(const String &topic, const Stri
         
         meter.updateDemand(power);
 
-        GLOG::printf("INVERTER: output power = %dW\n", power);
+        GLOG::printf_P(PSTR("INVERTER: output power = %dW\n"), power);
     }
 #endif
 }
@@ -229,7 +229,7 @@ void SoyosourceGTNInverter::setIncomingTopicData(const String &topic, const Stri
 std::list<String> SoyosourceGTNInverter::getTopicsToSubscribe() {
     std::list<String> topics;
 #ifdef LARGE_ESP_BOARD
-    topics.push_back("settings/power");
+    topics.push_back(F("settings/power"));
 #endif
     return topics;
 }
@@ -297,10 +297,10 @@ bool SoyosourceGTNInverter::extractMS51StatusData(const std::vector<uint8_t> &da
         return (uint16_t(data[i + 0]) << 8) | (uint16_t(data[i + 1]) << 0);
     };
 
-    GLOG::printf("INVERTER: Status frame (MS51, %d bytes) received\n", data.size());
+    GLOG::printf_P(PSTR("INVERTER: Status frame (MS51, %d bytes) received\n"), data.size());
 
     if (soyosource_get_16bit(8) == 0x0000 && data[15] == 0x00) {
-        GLOG::println("INVERTER: Ignoring empty MS51 status");
+        GLOG::println(F("INVERTER: Ignoring empty MS51 status"));
         return false;
     }
 
@@ -440,7 +440,7 @@ String SoyosourceGTNInverter::wifiModeToString(const uint8_t &operation_mode) {
             return "PV Limit";
     }
 
-  return String("Unknown 0x") + String(operation_mode, HEX);
+  return String(F("Unknown 0x")) + String(operation_mode, HEX);
 }
   
 String SoyosourceGTNInverter::errorToString(const uint8_t &mask) {

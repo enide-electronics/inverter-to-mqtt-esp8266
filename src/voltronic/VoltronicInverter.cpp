@@ -42,7 +42,7 @@ bool VoltronicInverter::sendCommand(String cmd) {
     memset(sendStr, 0, 30);
     sprintf((char *)sendStr, "%s%c%c\r", cmd.c_str(), (uint8_t)(cmdCrc >> 8), (uint8_t)(cmdCrc & 0xFF));
 
-    GLOG::printf("\nINVERTER: sendCommand %2u bytes, cmd=\"%s\", CRC=0x%04x\n", strlen((char *)sendStr), cmd.c_str(), cmdCrc);
+    GLOG::printf_P(PSTR("\nINVERTER: sendCommand %2u bytes, cmd=\"%s\", CRC=0x%04x\n"), strlen((char *)sendStr), cmd.c_str(), cmdCrc);
     
     return this->serial->write(sendStr, cmdLen + 2) > 0;
 }
@@ -116,8 +116,8 @@ String VoltronicInverter::recvResponse(uint16_t replysize) {
 
     // check first byte == (
     if (recvBuffer[0] != '(' || recvBuffer[replysize-1] != 0x0d) {
-        GLOG::println("\nINVERTER: incorrect start/stop bytes.");
-        GLOG::printf("INVERTER: Buffer: %s\n", recvBuffer);
+        GLOG::println(F("\nINVERTER: incorrect start/stop bytes."));
+        GLOG::printf_P(PSTR("INVERTER: Buffer: %s\n"), recvBuffer);
         return "";
     }
 

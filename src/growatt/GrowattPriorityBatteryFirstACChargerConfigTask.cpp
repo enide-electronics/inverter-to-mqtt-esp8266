@@ -29,9 +29,9 @@ String GrowattPriorityBatteryFirstACChargerConfigTask::subtopic()
 
 bool GrowattPriorityBatteryFirstACChargerConfigTask::run()
 {
-    GLOG::print("GrowattPriorityBatteryFirstACChargerConfigTask::run ");
-    GLOG::print((subtopic() + " payload=").c_str());
-    GLOG::println(mqttPayload.c_str());
+    GLOG::print(F("GrowattPriorityBatteryFirstACChargerConfigTask::run "));
+    GLOG::print(subtopic() + F(" payload="));
+    GLOG::println(mqttPayload);
     
     setSuccessful(false);
     
@@ -53,7 +53,7 @@ bool GrowattPriorityBatteryFirstACChargerConfigTask::run()
     // write back to inverter
     uint8_t result = this->node->writeMultipleRegisters(1092, 1);
     
-    response().set((String(subtopic()) + F("/data")).c_str(), (String("addr=1092 ac=") + acCharger).c_str());
+    response().set((String(subtopic()) + F("/data")).c_str(), (String(F("addr=1092 ac=")) + acCharger).c_str());
     setSuccessful(result == this->node->ku8MBSuccess);
 
     return isSuccessful();
