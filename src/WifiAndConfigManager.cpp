@@ -250,6 +250,105 @@ void WifiAndConfigManager::handleEraseAll() {
     ESP.restart();
 }
 
+void WifiAndConfigManager::handleParamPage() {
+    auto *server = wm.server.get();
+    if (server == NULL) {
+        return;
+    }
+
+    const bool chunkedResponse = server->chunkedResponseModeStart(200, "text/html");
+    if (!chunkedResponse) {
+        server->setContentLength(CONTENT_LENGTH_UNKNOWN);
+        server->send(200, "text/html", "");
+    }
+
+    String head = FPSTR(HTTP_HEAD_START);
+    head.replace(FPSTR(T_v), F("Setup"));
+    server->sendContent(head);
+    server->sendContent_P(HTTP_SCRIPT);
+    server->sendContent_P(HTTP_STYLE);
+    server->sendContent(paramsCfg.darkMode ? darkModeHeadElement : selectStyle);
+
+    String headEnd = FPSTR(HTTP_HEAD_END);
+    headEnd.replace(FPSTR(T_c), "");
+    server->sendContent(headEnd);
+
+    String formStart = FPSTR(HTTP_FORM_START);
+    formStart.replace(FPSTR(T_v), F("paramsave"));
+    server->sendContent(formStart);
+
+    WiFiManagerParameter **parameters = wm.getParameters();
+    const int parameterCount = wm.getParametersCount();
+    for (int i = 0; i < parameterCount; ++i) {
+        WiFiManagerParameter *parameter = parameters[i];
+        if (parameter == NULL) {
+            continue;
+        }
+
+        const char *id = parameter->getID();
+        const char *customHTML = parameter->getCustomHTML();
+        if (customHTML == NULL) {
+            customHTML = "";
+        }
+        if (id == NULL) {
+            server->sendContent(String(customHTML));
+            continue;
+        }
+
+        const char *parameterLabel = parameter->getLabel();
+        const char *parameterValue = parameter->getValue();
+        if (parameterLabel == NULL) {
+            parameterLabel = "";
+        }
+        if (parameterValue == NULL) {
+            parameterValue = "";
+        }
+
+        String label;
+        label.reserve(strlen(id) + strlen(parameterLabel) + 32);
+        label += F("<label for='");
+        label += id;
+        label += F("'>");
+        label += parameterLabel;
+        label += F("</label>");
+
+        String field;
+        field.reserve(strlen(id) + strlen(parameterValue) + strlen(customHTML) + 80);
+        field += F("<br/><input id='");
+        field += id;
+        field += F("' name='");
+        field += id;
+        field += F("' maxlength='");
+        field += String(parameter->getValueLength());
+        field += F("' value='");
+        field += parameterValue;
+        field += F("' ");
+        field += customHTML;
+        field += F(">\n");
+
+        switch (parameter->getLabelPlacement()) {
+            case WFM_LABEL_BEFORE:
+                server->sendContent(label);
+                server->sendContent(field);
+                break;
+            case WFM_LABEL_AFTER:
+                server->sendContent(field);
+                server->sendContent(label);
+                break;
+            default:
+                server->sendContent(field);
+                break;
+        }
+    }
+
+    server->sendContent_P(HTTP_FORM_END);
+    server->sendContent_P(HTTP_BACKBTN);
+    server->sendContent_P(HTTP_END);
+    if (chunkedResponse) {
+        server->chunkedResponseFinalize();
+    }
+}
+
 void WifiAndConfigManager::doFactoryReset() {
     GLOG::println(F("WiCM: DELETE CONFIG"));
     paramsCfg.erase();
@@ -391,19 +490,20 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     wm.setSaveConfigCallback(std::bind(&WifiAndConfigManager::saveWifiConfigCallback, this));
     wm.setSaveParamsCallback(std::bind(&WifiAndConfigManager::saveParamConfigCallback, this));
 
-    // Register /status on the WM webserver *before* WiFiManager registers its
-    // own /status handler. ESP8266WebServer walks handlers in insertion order
-    // and keeps the first match, so registering first here lets us replace
-    // WM's (empty) /status with our own page. If no StatusPage was wired in,
-    // this callback is a no-op and WM behaves exactly as before.
+    // Register overrides before WiFiManager installs its built-in routes.
     wm.setWebServerCallback([this]() {
-        if (statusPage == NULL || !wm.server) {
+        if (!wm.server) {
             return;
         }
-        wm.server->on(String(F("/status")).c_str(), [this]() {
-            String page = statusPage->renderHTML();
-            wm.server->send(200, F("text/html"), page);
+        wm.server->on(String(F("/param")).c_str(), [this]() {
+            handleParamPage();
         });
+        if (statusPage != NULL) {
+            wm.server->on(String(F("/status")).c_str(), [this]() {
+                String page = statusPage->renderHTML();
+                wm.server->send(200, F("text/html"), page);
+            });
+        }
     });
 
     wm.setTitle(F("Inverter to MQTT ESP8266"));
