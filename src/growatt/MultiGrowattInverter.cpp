@@ -42,7 +42,7 @@ MultiGrowattInverter::~MultiGrowattInverter() {
 void MultiGrowattInverter::read() {
     int modbusAddr = this->modbusAddrs[this->currentModbusIdx];
 
-    GLOG::printf(" @ %d", modbusAddr);
+    GLOG::printf_P(PSTR(" @ %d"), modbusAddr);
     Inverter *inverter = this->inverters[modbusAddr];
     inverter->read();
 
@@ -64,7 +64,7 @@ InverterData MultiGrowattInverter::getData(bool fullSet) {
 
     InverterData dataWithAddrPrefix;
     for (const auto & entry : data) {
-        dataWithAddrPrefix[String(modbusAddr) + "/" + entry.first] = entry.second;
+        dataWithAddrPrefix[String(modbusAddr) + F("/") + entry.first] = entry.second;
     }
 
     return dataWithAddrPrefix;
@@ -104,7 +104,7 @@ std::list<String> MultiGrowattInverter::getTopicsToSubscribe() {
 
         // append the inverter address as topic prefix: growatt/22/settings/priority/bat/ac
         for (String topic : topics) {
-            allTopics.push_back(String(addr, 10) + "/" + topic);
+            allTopics.push_back(String(addr, 10) + F("/") + topic);
         }
     }
 

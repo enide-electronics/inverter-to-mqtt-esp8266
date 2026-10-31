@@ -32,9 +32,9 @@ String GrowattPriorityConfigSetOneRegisterTask::subtopic()
 
 bool GrowattPriorityConfigSetOneRegisterTask::run()
 {
-    GLOG::print("GrowattPriorityConfigSetOneRegisterTask::run ");
-    GLOG::print((subtopic() + " payload=").c_str());
-    GLOG::println(mqttPayload.c_str());
+    GLOG::print(F("GrowattPriorityConfigSetOneRegisterTask::run "));
+    GLOG::print(subtopic() + F(" payload="));
+    GLOG::println(mqttPayload);
     
     setSuccessful(false);
     
@@ -50,7 +50,7 @@ bool GrowattPriorityConfigSetOneRegisterTask::run()
         // write back to inverter
         uint8_t result = this->node->writeMultipleRegisters(address, 1);
         
-        response().set((String(subtopic()) + F("/data")).c_str(), (String("addr=") + address + " " + this->configName + "=" + intValue).c_str());
+        response().set((String(subtopic()) + F("/data")).c_str(), (String(F("addr=")) + address + " " + this->configName + F("=") + intValue).c_str());
         setSuccessful(result == this->node->ku8MBSuccess);
     }
     

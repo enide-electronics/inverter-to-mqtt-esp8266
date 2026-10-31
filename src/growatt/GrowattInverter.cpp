@@ -30,18 +30,18 @@ void GrowattInverter::read() {
         runningTask = incomingTasks.front();
         incomingTasks.pop_front();
         
-        GLOG::print(", TASK starting");
+        GLOG::print(F(", TASK starting"));
         
         runningTask->run();
         this->valid = true; // it's always true even if the task fails be cause we will always return a Ok/Fail message on the "task_topic"/result
         
-        GLOG::print(", completed");
+        GLOG::print(F(", completed"));
             
         return;
     }
     
     // read data
-    GLOG::print(String(", step=") + stateSequence[currentStateIdx]);
+    GLOG::print(String(F(", step=")) + stateSequence[currentStateIdx]);
 
     if (stateSequence[currentStateIdx] == 0) {
         uint8_t result1 = this->node->readInputRegisters(0, 12);

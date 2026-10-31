@@ -83,6 +83,7 @@ class WifiAndConfigManager {
         void saveParamConfigCallback();
         void saveWifiConfigCallback();
         void handleEraseAll();
+        void handleParamPage();
         String getParam(String name);
         void _updateInverterTypeSelect();
         void _updateTempCtrlCheckbox();
@@ -93,9 +94,8 @@ class WifiAndConfigManager {
     public:
         WifiAndConfigManager();
 
-        // Must be called before setupWifiAndConfig() to take effect, because
-        // the /status route has to be registered during the WiFiManager web
-        // server callback (before WiFiManager registers its own /status).
+        // Must be called before setupWifiAndConfig() to enable the /status
+        // route and menu item.
         void setStatusPage(StatusPage *sp);
 
         void setupWifiAndConfig();
