@@ -25,15 +25,15 @@ GrowattPriorityTimeConfigTask::~GrowattPriorityTimeConfigTask()
 String GrowattPriorityTimeConfigTask::subtopic()
 {
     // format should be similar to: "settings/priority/bat/t1"
-    return String(F("settings/priority/")) + this->priorityName + "/" + this->timeName;
+    return String(F("settings/priority/")) + this->priorityName + F("/") + this->timeName;
 }
 
 #define TIME_MODBUS_LEN 3
 
 bool GrowattPriorityTimeConfigTask::run()
 {
-    GLOG::print("GrowattPriorityTimeConfigTask::run ");
-    GLOG::print((subtopic() + " payload=").c_str());
+    GLOG::print(F("GrowattPriorityTimeConfigTask::run "));
+    GLOG::print((subtopic() + F(" payload=")).c_str());
     GLOG::println(mqttPayload.c_str());
     
     setSuccessful(false);
@@ -70,9 +70,9 @@ bool GrowattPriorityTimeConfigTask::run()
                     // write back to inverter
                     result = this->node->writeMultipleRegisters(startAddress, TIME_MODBUS_LEN);
                     
-                    response().set((String(subtopic()) + F("/data")).c_str(), (String("addr=") + startAddress + 
-                        " start=" + tr.startHour + ":" + tr.startMinute + 
-                        " end=" + tr.endHour + ":" + tr.endMinute).c_str());
+                    response().set((String(subtopic()) + F("/data")).c_str(), (String(F("addr=")) + startAddress + 
+                        F(" start=") + tr.startHour + F(":") + tr.startMinute + 
+                        F(" end=") + tr.endHour + F(":") + tr.endMinute).c_str());
                     
                     setSuccessful(result == this->node->ku8MBSuccess);
                 }

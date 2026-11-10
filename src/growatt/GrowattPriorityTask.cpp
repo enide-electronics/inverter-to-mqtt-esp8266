@@ -222,11 +222,11 @@ bool GrowattPriorityTask::readPriorityStatus() {
 
         String jsonResponse;
         serializeJson(json, jsonResponse);
-        GLOG::println(String(" ok, json=") + jsonResponse);
+        GLOG::println(String(F(" ok, json=")) + jsonResponse);
         response().set((String(F(TOPIC_SETTINGS_PRIORITY)) + F("/data")).c_str(), jsonResponse); // setting as string
         return true;
     } else {
-        GLOG::println(String(" failed with code ") + String(result, DEC) + F(", cannot read 1070...1118"));
+        GLOG::println(String(F(" failed with code ")) + String(result, DEC) + F(", cannot read 1070...1118"));
         return false;
     }
 }

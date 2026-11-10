@@ -24,7 +24,7 @@ String GrowattReadInputTask::subtopic() {
 bool GrowattReadInputTask::run() {
     
     GLOG::print(F("GrowattReadInputTask::run "));
-    GLOG::println((subtopic() + " addr=" + this->addr + " len=" + this->length).c_str());
+    GLOG::println((subtopic() + F(" addr=") + this->addr + F(" len=") + this->length).c_str());
     
     setSuccessful(false);
     
@@ -35,7 +35,7 @@ bool GrowattReadInputTask::run() {
     
     // no length?
     if (length == 0) {
-        response().set((String(F(TOPIC_SETTINGS_READ_INPUT_TASK)) + "/data").c_str(), "");
+        response().set((String(F(TOPIC_SETTINGS_READ_INPUT_TASK)) + F("/data")).c_str(), "");
         setSuccessful(true);
     } else {    
         uint8_t result = this->node->readInputRegisters(addr, length);
