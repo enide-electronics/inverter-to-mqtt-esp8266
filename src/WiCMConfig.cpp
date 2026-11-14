@@ -6,6 +6,7 @@
 */
 #include "WiCMConfig.h"
 #include "GLog.h"
+#include "ModbusUtils.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <LittleFS.h>
@@ -71,6 +72,54 @@ WiCMParamConfig::WiCMParamConfig() {
     this->tempCtrlThresholdOff = 35.0f;
 }
 WiCMParamConfig::~WiCMParamConfig(){};
+
+void WiCMParamConfig::show() const {
+    GLOG::print(F("-> Device name   : "));
+    GLOG::println(deviceName);
+
+    GLOG::print(F("-> SoftAP pass   : "));
+    GLOG::println(softApPassword);
+
+    GLOG::print(F("-> Mqtt server   : "));
+    GLOG::println(mqttServer);
+
+    GLOG::print(F("-> Mqtt port     : "));
+    GLOG::println(mqttPort);
+
+    GLOG::print(F("-> Mqtt Username : "));
+    GLOG::println(mqttUsername);
+
+    GLOG::print(F("-> Mqtt Password : "));
+    GLOG::println(mqttPassword);
+
+    GLOG::print(F("-> Mqtt Topic    : "));
+    GLOG::println(mqttBaseTopic);
+
+    GLOG::print(F("-> Modbus Addrs  : "));
+    GLOG::println(ModbusUtils::vectorToCSV(modbusAddresses).c_str());
+
+    GLOG::print(F("-> Modbus Poll(s): "));
+    GLOG::println(modbusPollingInSeconds);
+
+    GLOG::print(F("-> Inverter type : "));
+    GLOG::println(inverterType);
+
+    GLOG::print(F("-> Dark mode     : "));
+    GLOG::println(darkMode ? F("yes") : F("no"));
+
+    GLOG::print(F("-> TempCtrl on   : "));
+    GLOG::println(tempCtrlEnabled ? F("yes") : F("no"));
+    GLOG::print(F("-> TempCtrl topic: "));
+    GLOG::println(tempCtrlTopic);
+    GLOG::print(F("-> TempCtrl p on : "));
+    GLOG::println(tempCtrlPayloadOn);
+    GLOG::print(F("-> TempCtrl p off: "));
+    GLOG::println(tempCtrlPayloadOff);
+    GLOG::print(F("-> TempCtrl on>= : "));
+    GLOG::println(String(tempCtrlThresholdOn, 1));
+    GLOG::print(F("-> TempCtrl off< : "));
+    GLOG::println(String(tempCtrlThresholdOff, 1));
+}
 
 void WiCMParamConfig::save() {
     //save the custom parameters to FS
@@ -184,6 +233,33 @@ WiCMWifiConfig::WiCMWifiConfig() {
 }
 
 WiCMWifiConfig::~WiCMWifiConfig() {
+}
+
+void WiCMWifiConfig::show() const {
+    GLOG::print(F("-> IP            : "));
+    if (ip.isSet()) {
+        GLOG::println(ip.toString());
+    } else {
+        GLOG::println(F("<not set>"));
+    }
+    GLOG::print(F("-> GW            : "));
+    if (gw.isSet()) {
+        GLOG::println(gw.toString());
+    } else {
+        GLOG::println(F("<not set>"));
+    }
+    GLOG::print(F("-> SN            : "));
+    if (sn.isSet()) {
+        GLOG::println(sn.toString());
+    } else {
+        GLOG::println(F("<not set>"));
+    }
+    GLOG::print(F("-> DNS           : "));
+    if (dns.isSet()) {
+        GLOG::println(dns.toString());
+    } else {
+        GLOG::println(F("<not set>"));
+    }
 }
 
 void WiCMWifiConfig::load() {

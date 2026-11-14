@@ -9,31 +9,8 @@
 #include "WifiAndConfigManager.h"
 #include "WiCMConfig.h"
 #include "GLog.h"
+#include "ModbusUtils.h"
 #include <LittleFS.h>
-#include <string>
-#include <sstream>
-
-
-static std::string vectorToCSV(const std::vector<int>& vec) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < vec.size(); ++i) {
-        oss << vec[i];
-        if (i != vec.size() - 1) {
-            oss << ",";
-        }
-    }
-    return oss.str();
-}
-
-std::vector<int> csvToVector(const std::string& csv) {
-    std::vector<int> result;
-    std::istringstream iss(csv);
-    std::string token;
-    while (std::getline(iss, token, ',')) {
-        result.push_back(String(token.c_str()).toInt());
-    }
-    return result;
-}
 
 /*
   Future work on WiFiManager: To automatically exit from the paramsave page back to root, after saving!
@@ -462,7 +439,7 @@ void WifiAndConfigManager::setupWifiAndConfig() {
     
     // inverter params
     inverterSectionHeaderParam = new WiFiManagerParameter(inverterSectionHeaderStr);
-    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
+    modbusAddressParam = new WiFiManagerParameter("modbus", "Inverter modbus address", ModbusUtils::vectorToCSV(paramsCfg.modbusAddresses).c_str(), 9); // at most 5 inverter IDs: a,b,c,d,e
     modbusPollingInSecondsParam = new WiFiManagerParameter("modbuspoll", "Inverter modbus polling (secs)", String(paramsCfg.modbusPollingInSeconds).c_str(), 3);
     inverterTypeComboboxParamIdx = -1;
     _updateInverterTypeSelect();
@@ -621,7 +598,7 @@ void WifiAndConfigManager::copyFromParamsToVars() {
     paramsCfg.mqttPassword.trim();
     paramsCfg.mqttBaseTopic = String(mqttBaseTopicParam->getValue());
     
-    paramsCfg.modbusAddresses = csvToVector(modbusAddressParam->getValue());
+    paramsCfg.modbusAddresses = ModbusUtils::csvToVector(modbusAddressParam->getValue());
     paramsCfg.modbusPollingInSeconds = String(modbusPollingInSecondsParam->getValue()).toInt();
     paramsCfg.inverterType = String(inverterTypeCustomHidden->getValue());
 
@@ -654,74 +631,8 @@ String WifiAndConfigManager::getParam(String name){
 
 void WifiAndConfigManager::show() {
     GLOG::println(F("---------------------------"));
-    GLOG::print(F("-> IP            : "));
-    if (wifiCfg.ip.isSet()) {
-        GLOG::println(wifiCfg.ip.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> GW            : "));
-    if (wifiCfg.gw.isSet()) {
-        GLOG::println(wifiCfg.gw.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> SN            : "));
-    if (wifiCfg.sn.isSet()) {
-        GLOG::println(wifiCfg.sn.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> DNS           : "));
-    if (wifiCfg.dns.isSet()) {
-        GLOG::println(wifiCfg.dns.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-
-    GLOG::println(F("---------------------------"));
-    GLOG::print(F("-> Device name   : "));
-    GLOG::println(paramsCfg.deviceName);
-    
-    GLOG::print(F("-> SoftAP pass   : "));
-    GLOG::println(paramsCfg.softApPassword);
-    
-    GLOG::print(F("-> Mqtt server   : "));
-    GLOG::println(paramsCfg.mqttServer);
- 
-    GLOG::print(F("-> Mqtt port     : "));
-    GLOG::println(paramsCfg.mqttPort);
-    
-    GLOG::print(F("-> Mqtt Username : "));
-    GLOG::println(paramsCfg.mqttUsername);
-    
-    GLOG::print(F("-> Mqtt Password : "));
-    GLOG::println(paramsCfg.mqttPassword);
-    
-    GLOG::print(F("-> Mqtt Topic    : "));
-    GLOG::println(paramsCfg.mqttBaseTopic);
-    
-    GLOG::print(F("-> Modbus Addrs  : "));
-    GLOG::println(vectorToCSV(paramsCfg.modbusAddresses).c_str());
-    
-    GLOG::print(F("-> Modbus Poll(s): "));
-    GLOG::println(paramsCfg.modbusPollingInSeconds);
-
-    GLOG::print(F("-> Inverter type: "));
-    GLOG::println(paramsCfg.inverterType);
-
-    GLOG::print(F("-> Dark mode     : "));
-    GLOG::println(paramsCfg.darkMode ? F("yes") : F("no"));
-
-    GLOG::print(F("-> TempCtrl on   : "));
-    GLOG::println(paramsCfg.tempCtrlEnabled ? F("yes") : F("no"));
-    GLOG::print(F("-> TempCtrl topic: "));
-    GLOG::println(paramsCfg.tempCtrlTopic);
-    GLOG::print(F("-> TempCtrl on>= : "));
-    GLOG::println(String(paramsCfg.tempCtrlThresholdOn, 1));
-    GLOG::print(F("-> TempCtrl off< : "));
-    GLOG::println(String(paramsCfg.tempCtrlThresholdOff, 1));
-
+    wifiCfg.show();
+    paramsCfg.show();
     GLOG::println(F("---------------------------"));
 }
 

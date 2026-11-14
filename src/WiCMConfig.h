@@ -43,6 +43,7 @@ class WiCMParamConfig {
         WiCMParamConfig();
         virtual ~WiCMParamConfig();
 
+        void show() const;
         void save();
         void load();
         void erase();
@@ -59,6 +60,7 @@ class WiCMWifiConfig {
         WiCMWifiConfig();
         virtual ~WiCMWifiConfig();
 
+        void show() const;
         void save() const;
         void load();
         void erase();
