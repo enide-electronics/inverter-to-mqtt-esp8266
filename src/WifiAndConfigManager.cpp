@@ -654,74 +654,8 @@ String WifiAndConfigManager::getParam(String name){
 
 void WifiAndConfigManager::show() {
     GLOG::println(F("---------------------------"));
-    GLOG::print(F("-> IP            : "));
-    if (wifiCfg.ip.isSet()) {
-        GLOG::println(wifiCfg.ip.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> GW            : "));
-    if (wifiCfg.gw.isSet()) {
-        GLOG::println(wifiCfg.gw.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> SN            : "));
-    if (wifiCfg.sn.isSet()) {
-        GLOG::println(wifiCfg.sn.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-    GLOG::print(F("-> DNS           : "));
-    if (wifiCfg.dns.isSet()) {
-        GLOG::println(wifiCfg.dns.toString());    
-    } else {
-        GLOG::println(F("<not set>"));    
-    }
-
-    GLOG::println(F("---------------------------"));
-    GLOG::print(F("-> Device name   : "));
-    GLOG::println(paramsCfg.deviceName);
-    
-    GLOG::print(F("-> SoftAP pass   : "));
-    GLOG::println(paramsCfg.softApPassword);
-    
-    GLOG::print(F("-> Mqtt server   : "));
-    GLOG::println(paramsCfg.mqttServer);
- 
-    GLOG::print(F("-> Mqtt port     : "));
-    GLOG::println(paramsCfg.mqttPort);
-    
-    GLOG::print(F("-> Mqtt Username : "));
-    GLOG::println(paramsCfg.mqttUsername);
-    
-    GLOG::print(F("-> Mqtt Password : "));
-    GLOG::println(paramsCfg.mqttPassword);
-    
-    GLOG::print(F("-> Mqtt Topic    : "));
-    GLOG::println(paramsCfg.mqttBaseTopic);
-    
-    GLOG::print(F("-> Modbus Addrs  : "));
-    GLOG::println(vectorToCSV(paramsCfg.modbusAddresses).c_str());
-    
-    GLOG::print(F("-> Modbus Poll(s): "));
-    GLOG::println(paramsCfg.modbusPollingInSeconds);
-
-    GLOG::print(F("-> Inverter type: "));
-    GLOG::println(paramsCfg.inverterType);
-
-    GLOG::print(F("-> Dark mode     : "));
-    GLOG::println(paramsCfg.darkMode ? F("yes") : F("no"));
-
-    GLOG::print(F("-> TempCtrl on   : "));
-    GLOG::println(paramsCfg.tempCtrlEnabled ? F("yes") : F("no"));
-    GLOG::print(F("-> TempCtrl topic: "));
-    GLOG::println(paramsCfg.tempCtrlTopic);
-    GLOG::print(F("-> TempCtrl on>= : "));
-    GLOG::println(String(paramsCfg.tempCtrlThresholdOn, 1));
-    GLOG::print(F("-> TempCtrl off< : "));
-    GLOG::println(String(paramsCfg.tempCtrlThresholdOff, 1));
-
+    wifiCfg.show();
+    paramsCfg.show();
     GLOG::println(F("---------------------------"));
 }
 
