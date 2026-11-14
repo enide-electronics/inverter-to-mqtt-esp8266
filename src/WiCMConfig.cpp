@@ -6,10 +6,10 @@
 */
 #include "WiCMConfig.h"
 #include "GLog.h"
+#include "ModbusUtils.h"
 #include <ArduinoJson.h>
 #include <FS.h>
 #include <LittleFS.h>
-#include <sstream>
 
 // global
 #define DEFAULT_TOPIC "inverter"
@@ -96,14 +96,7 @@ void WiCMParamConfig::show() const {
     GLOG::println(mqttBaseTopic);
 
     GLOG::print(F("-> Modbus Addrs  : "));
-    std::ostringstream addresses;
-    for (size_t i = 0; i < modbusAddresses.size(); ++i) {
-        if (i > 0) {
-            addresses << ",";
-        }
-        addresses << modbusAddresses[i];
-    }
-    GLOG::println(addresses.str().c_str());
+    GLOG::println(ModbusUtils::vectorToCSV(modbusAddresses).c_str());
 
     GLOG::print(F("-> Modbus Poll(s): "));
     GLOG::println(modbusPollingInSeconds);
